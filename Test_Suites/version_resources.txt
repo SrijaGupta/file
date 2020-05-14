@@ -1,0 +1,18 @@
+***Settings***
+Resource    /Users/srigupta/Desktop/NitaDemo/Test_Suites/device.txt
+Library    String
+Library    Collections
+Library    XML
+
+
+
+***Keywords***
+Check Software Version
+    [Arguments]    ${device}    ${software-version}
+    ${get-software-details}=    Command Executor     ${device}    show version    xml    //junos-version
+    Should be equal    ${software-version}    ${get-software-details}    {get-software-details}    JunOS version is different than expected on ${device}
+
+SSH Check Version
+    [Arguments]    ${device}    ${software-version}
+    ${get-software-details}=    SSH Command Executor     ${device}    uname -a |awk '{print $3}    xml    //junos-version
+    Should be equal    ${software-version}    ${get-software-details}    {get-software-details}    JunOS version is different than expected on ${device}
