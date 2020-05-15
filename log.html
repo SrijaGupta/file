@@ -1735,28 +1735,28 @@ function stopPropagation(event) {
 window.output = {};
 </script>
 <script type="text/javascript">
-window.output["suite"] = [1,2,3,4,[],[1,0,1097],[],[[5,0,1,6,[7],[1,692,1],[[0,8,9,0,10,11,0,0,[1,693,0],[],[]]]],[12,0,1,13,[14],[1,694,300],[[0,12,15,0,0,16,0,0,[1,694,299],[[0,17,18,0,0,19,20,0,[1,694,298],[[0,21,9,0,22,23,24,0,[1,695,296],[[0,25,26,0,27,28,0,0,[1,696,295],[],[[698,2,29],[991,2,30]]]],[[991,2,31]]]],[[992,2,32]]],[0,8,9,0,10,33,0,0,[1,992,1],[],[]]],[]]]]],[[1,34,18,0,0,35,0,0,[1,308,384],[[3,36,0,0,0,0,0,0,[1,308,383],[[4,37,0,0,0,0,0,0,[1,308,383],[[0,21,9,0,22,38,0,0,[1,309,382],[[0,39,26,0,0,0,0,0,[1,309,382],[],[[691,2,40]]]],[]]],[]]],[]]],[]],[2,41,18,0,0,35,0,0,[1,994,103],[[3,36,0,0,0,0,0,0,[1,994,102],[[4,37,0,0,0,0,0,0,[1,994,102],[[0,21,9,0,22,42,0,0,[1,995,101],[[0,43,26,0,0,0,0,0,[1,995,101],[],[[995,2,44]]]],[]]],[]]],[]]],[]]],[2,2,2,2]];
+window.output["suite"] = [1,2,3,0,[],[0,0,757],[],[[4,0,1,0,[],[0,753,2,5],[[0,6,7,0,0,8,0,0,[0,754,1],[[0,9,10,0,0,11,12,0,[0,754,0],[],[[754,5,5]]]],[]]]]],[[1,13,10,0,0,14,0,0,[1,462,291],[[3,15,0,0,0,0,0,0,[1,462,291],[[4,16,0,0,0,0,0,0,[1,462,291],[[0,17,18,0,19,20,0,0,[1,463,290],[[0,21,22,0,0,0,0,0,[1,463,290],[],[]]],[]]],[]]],[]]],[]],[2,23,10,0,0,14,0,0,[1,755,2],[[3,15,0,0,0,0,0,0,[1,756,1],[[4,16,0,0,0,0,0,0,[1,756,1],[[0,17,18,0,19,24,0,0,[1,756,1],[[0,25,22,0,0,0,0,0,[1,757,0],[],[]]],[]]],[]]],[]]],[]]],[1,0,1,0]];
 </script>
 <script type="text/javascript">
 window.output["strings"] = [];
 </script>
 <script type="text/javascript">
-window.output["strings"] = window.output["strings"].concat(["*","*Juniper Test","*/home/nita/demo-robot/demo1/robot-test/juniper_test.robot","*juniper_test.robot","*<p>Example Test case\x3c/p>","*Hello World","*<p>Example test\x3c/p>","*example","*Should Be Equal","*BuiltIn","*<p>Fails if the given objects are unequal.\x3c/p>","*Hello,world!, Hello,world!","*Check Software Version","*<p>Version check\x3c/p>","*version","*version_resources","*${device}, ${OS_version}","*Command Executor","*device","*${device}, show version, xml, //junos-version","*${get-software-details}","*Run Keyword","*<p>Executes the given keyword with the given arguments.\x3c/p>","*${device}.Commands Executor, command=${command}, format=${display_format}, xpath=${xpath}, regex=${regex}","*${result}","*Commands Executor","*vsrx1","*<p>Function that issues commands\x3c/p>","*command=${command}, format=${display_format}, xpath=${xpath}, regex=${regex}","*[host vsrx1 session-id 10088] Requesting 'ExecuteRpc'","*Executing: show version [//junos-version]\n18.1R1.9","*${result} = 18.1R1.9","*${get-software-details} = 18.1R1.9","*${software-version}, ${get-software-details}, {get-software-details}, JunOS version is different than expected on ${device}","*Device Open Connection","*${device}","*${device} IN [ @{devices} ]","*${device} = vsrx1","*${device}.Open Connection","*Open Connection","*[host vsrx1 session-id 10088] initialized: session-id=10088 | server_capabilities=&lt;dict_keyiterator object at 0x7f3a89b43458&gt;","*Device Close Connection","*${device}.Close Connection","*Close Connection","*[host vsrx1 session-id 10088] Requesting 'CloseSession'"]);
+window.output["strings"] = window.output["strings"].concat(["*","*Ssh Test","*/home/nita/demo-robot/demo1/robot-test/ssh_test.robot","*ssh_test.robot","*SSH Version Check","*Keyword 'device.SSH Command Executor' expected 2 arguments, got 4.","*SSH Check Version","*version_resources","*${device}, {OS_version}","*SSH Command Executor","*device","*${device}, uname -a |awk '{print $3}, xml, //junos-version","*${get-software-details}","*SSH Open Connection","*${device}","*${device} IN [ @{devices} ]","*${device} = switch","*Run Keyword","*BuiltIn","*<p>Executes the given keyword with the given arguments.\x3c/p>","*${device}.Connect","*Connect","*switch","*SSH Close Connection","*${device}.Disconnect","*Disconnect"]);
 </script>
 <script type="text/javascript">
-window.output["stats"] = [[{"elapsed":"00:00:00","fail":0,"label":"Critical Tests","pass":2},{"elapsed":"00:00:00","fail":0,"label":"All Tests","pass":2}],[{"elapsed":"00:00:00","fail":0,"label":"example","pass":1},{"elapsed":"00:00:00","fail":0,"label":"version","pass":1}],[{"elapsed":"00:00:01","fail":0,"id":"s1","label":"Juniper Test","name":"Juniper Test","pass":2}]];
+window.output["stats"] = [[{"elapsed":"00:00:00","fail":1,"label":"Critical Tests","pass":0},{"elapsed":"00:00:00","fail":1,"label":"All Tests","pass":0}],[],[{"elapsed":"00:00:01","fail":1,"id":"s1","label":"Ssh Test","name":"Ssh Test","pass":0}]];
 </script>
 <script type="text/javascript">
 window.output["errors"] = [];
 </script>
 <script type="text/javascript">
-window.output["baseMillis"] = 1589527531386;
+window.output["baseMillis"] = 1589529869073;
 </script>
 <script type="text/javascript">
-window.output["generated"] = 1105;
+window.output["generated"] = 762;
 </script>
 <script type="text/javascript">
-window.settings = {"defaultLevel":"INFO","minLevel":"INFO","reportURL":"report.html","rpa":false,"splitLogBase":"log","title":""};
+window.settings = {"defaultLevel":"INFO","minLevel":"FAIL","reportURL":"report.html","rpa":false,"splitLogBase":"log","title":""};
 </script>
 <title></title>
 </head>
