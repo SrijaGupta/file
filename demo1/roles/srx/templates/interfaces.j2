@@ -1,0 +1,17 @@
+{# Setup phyical interfaces: #}
+{% for interface in interfaces %}
+{% if interface.descr is defined %}
+set interfaces {{ interface.ifname }} description "{{ interface.descr }}"
+{% endif %}
+{% for unit in interface.units %}
+set interfaces {{ interface.ifname }} unit {{ unit.id }} family inet address {{ unit.ipv4_address}}/{{ unit.ipv4_prefixlen }}
+{% if unit.ospf_area is defined %}
+{% if interface.ifname == 'lo0' %}
+set protocols ospf area {{ unit.ospf_area }} interface {{ interface.ifname }}.{{ unit.id }} passive
+{% else %}
+set protocols ospf area {{ unit.ospf_area }} interface {{ interface.ifname }}.{{ unit.id }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% endfor %}

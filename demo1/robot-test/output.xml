@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 3.1.2 (Python 3.6.9 on linux)" generated="20200515 08:59:15.870" rpa="false">
+<suite id="s1" name="Ssh Test" source="/home/nita/demo-robot/demo1/robot-test/ssh_test.robot">
+<kw name="SSH Open Connection" library="device" type="setup">
+<arguments>
+<arg>${device}</arg>
+</arguments>
+<kw name="${device} IN [ @{devices} ]" type="for">
+<kw name="${device} = switch" type="foritem">
+<kw name="Run Keyword" library="BuiltIn">
+<doc>Executes the given keyword with the given arguments.</doc>
+<arguments>
+<arg>${device}.Connect</arg>
+</arguments>
+<kw name="Connect" library="switch">
+<status status="PASS" starttime="20200515 08:59:16.306" endtime="20200515 08:59:16.594"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.306" endtime="20200515 08:59:16.594"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.306" endtime="20200515 08:59:16.594"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.305" endtime="20200515 08:59:16.594"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.305" endtime="20200515 08:59:16.595"></status>
+</kw>
+<test id="s1-t1" name="SSH Version Check">
+<kw name="SSH Check Version" library="version_resources">
+<arguments>
+<arg>${device}</arg>
+<arg>{OS_version}</arg>
+</arguments>
+<kw name="SSH Command Executor" library="device">
+<arguments>
+<arg>${device}</arg>
+<arg>show version</arg>
+<arg>xml</arg>
+</arguments>
+<assign>
+<var>${get-software-details}</var>
+</assign>
+<msg timestamp="20200515 08:59:16.597" level="FAIL">Keyword 'device.SSH Command Executor' expected 2 arguments, got 3.</msg>
+<status status="FAIL" starttime="20200515 08:59:16.596" endtime="20200515 08:59:16.597"></status>
+</kw>
+<status status="FAIL" starttime="20200515 08:59:16.596" endtime="20200515 08:59:16.597"></status>
+</kw>
+<status status="FAIL" starttime="20200515 08:59:16.595" endtime="20200515 08:59:16.597" critical="yes">Keyword 'device.SSH Command Executor' expected 2 arguments, got 3.</status>
+</test>
+<kw name="SSH Close Connection" library="device" type="teardown">
+<arguments>
+<arg>${device}</arg>
+</arguments>
+<kw name="${device} IN [ @{devices} ]" type="for">
+<kw name="${device} = switch" type="foritem">
+<kw name="Run Keyword" library="BuiltIn">
+<doc>Executes the given keyword with the given arguments.</doc>
+<arguments>
+<arg>${device}.Disconnect</arg>
+</arguments>
+<kw name="Disconnect" library="switch">
+<status status="PASS" starttime="20200515 08:59:16.600" endtime="20200515 08:59:16.600"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.599" endtime="20200515 08:59:16.600"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.599" endtime="20200515 08:59:16.600"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.598" endtime="20200515 08:59:16.600"></status>
+</kw>
+<status status="PASS" starttime="20200515 08:59:16.598" endtime="20200515 08:59:16.600"></status>
+</kw>
+<status status="FAIL" starttime="20200515 08:59:15.872" endtime="20200515 08:59:16.600"></status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="1">Critical Tests</stat>
+<stat pass="0" fail="1">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="0" fail="1" id="s1" name="Ssh Test">Ssh Test</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

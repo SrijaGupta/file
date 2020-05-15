@@ -1,0 +1,18 @@
+---
+login_message: "\n\nUnauthorized Access is strictly prohibited\n************************************************************************\n\n"
+
+# initial defaults
+
+netconf_port: '22'
+netconf_timeout: '10'
+ansible_user: 'jcluser'
+ansible_pass: 'Juniper!1'
+ansible_connection: 'netconf'
+
+#
+# vars for junos installation
+OS_dir: '/var/ftp/junos'
+OS_version: '18.3R3-S1.2'
+#OS_package: 'junos-vmhost-install-mx-x86-64-18.3R3-S1.2.tgz'
+
+wait_time: 3600

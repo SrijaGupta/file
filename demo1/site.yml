@@ -1,0 +1,9 @@
+---
+- import_playbook: './make_clean.yml'
+
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: srx }
+

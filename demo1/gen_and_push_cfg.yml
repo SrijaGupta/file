@@ -1,0 +1,21 @@
+---
+- name: Build base interfaces and ospf config
+  template:
+    src: 'interfaces.j2'
+    dest: 'build/{{ inventory_hostname }}/interfaces.cfg'
+
+- name: Assemble config
+  assemble:
+    src: 'build/{{ inventory_hostname }}/'
+    dest: 'build/{{ inventory_hostname }}/junos.conf'
+    mode: 0755
+    regexp: '.+\.cfg'
+
+- name: Push config to device
+  juniper_junos_config:
+    src: 'build/{{ inventory_hostname }}/junos.conf'
+    format: 'set'
+    load: 'merge'
+    comment: 'Base ipv4 interface and ospf configuration applied.'
+  register: response
+

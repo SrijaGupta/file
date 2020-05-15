@@ -1,0 +1,27 @@
+---
+interfaces:
+  - ifname: 'ge-0/0/0'
+    descr: 'To ge-0/0/1 on VSRX2'
+    units: 
+      - id: 0
+        ipv4_address: '10.0.1.2'
+        ipv4_prefixlen: 30
+        ospf_area: 0
+
+  - ifname: 'ge-0/0/1'
+    descr: 'To ge-0/0/1 on VSRX1'
+    units: 
+      - id: 0
+        ipv4_address: '10.0.2.2'
+        ipv4_prefixlen: 30
+        ospf_area: 0
+
+  - ifname: 'lo0'
+    descr: 'loopback0'
+    units: 
+      - id: 0
+        ipv4_address: '10.0.0.7'
+        ipv4_prefixlen: 32
+        ospf_area: 0
+        is_router_id: true
+

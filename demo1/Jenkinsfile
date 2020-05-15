@@ -1,0 +1,16 @@
+//!groovy
+
+node {
+    withEnv(['PATH+PYTHON=/usr/local/bin','PATH+LIB=/usr/local/lib', 'PATH+SEL=/usr/lib64']) {
+        stage('Checkout source code') {
+            checkout scm
+        }
+
+        stage('Setup testbed network.') {
+            ansiColor('xterm') {
+                echo "Running playbook"
+                ansiblePlaybook(installation: 'ansible', inventory: 'hosts', playbook: 'site.yml', colorized: true)
+            }
+        }
+    }
+}

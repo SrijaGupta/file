@@ -1,0 +1,16 @@
+---
+- name: Creating build directories for each host
+  hosts: all
+  connection: local
+  tasks:
+    - name: remove host build temp directory, if present
+      file:
+        path: 'build/{{inventory_hostname}}'
+        state: absent
+
+    - name: create host build temp directory
+      file:
+        path: 'build/{{inventory_hostname}}'
+        state: directory
+        mode: 0777
+

@@ -1,0 +1,49 @@
+---
+- name: Check for NETCONF
+  wait_for: host={{ ansible_host }} port=22 timeout=5
+  register: netconf_check_result
+  ignore_errors: true
+     
+- name: Check for packet mode
+  juniper_junos_command:
+    command: 'show security flow status'
+    formats: json
+  register: show_security_output
+
+- name: Output command
+  debug: 
+    var: show_security_output['parsed_output']['flow-status-all'][0]['flow-forwarding-mode'][0]['flow-forwarding-mode-inet'][0]['data']
+
+- name: Configure packet mode
+  juniper_junos_config:
+    config_mode: 'exclusive'
+    comment: 'Change to packet-based forwarding'
+    load: 'merge'
+    lines:
+      - "delete security"
+      - "set security forwarding-options family mpls mode packet-based"
+  when: show_security_output['parsed_output']['flow-status-all'][0]['flow-forwarding-mode'][0]['flow-forwarding-mode-inet'][0]['data'] == "flow based"
+  register: response
+
+- name: Print the config changes.
+  debug:
+    var: response.diff_lines
+  when: response.diff_lines is defined
+    
+- name: Reload device to enable packet mode
+  juniper_junos_system:
+    action: 'reboot'
+  when: response.diff_lines is defined
+    
+- name: Wait for device to reload
+  wait_for_connection:
+   delay: 30 
+   timeout: 300
+  when: response.diff_lines is defined
+
+- name: gen and push configs
+  include_tasks:
+    file: gen_and_push_cfg.yml
+
+
+
