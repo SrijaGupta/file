@@ -48,7 +48,7 @@ pysftp==0.2.9
 jsonpath-rw==1.4.0
 certifi==2018.11.29
 psycopg2==2.8.3
-psutil==5.6.3
+psutil==5.6.6
 backports.ssl_match_hostname==3.5.0.1
 backports.ssl==0.0.9
 socketIO-client==0.7.2 # UR ID : TOBY-4740
