@@ -1,0 +1,9 @@
+---
+- name: Creating base ipclos config
+  template: src=ipclos.j2 dest={{ tmp_dir }}/ipclos.cfg
+
+- name: Creating policy-options config
+  template: src=policy-options.j2 dest={{ tmp_dir }}/policy-options.cfg
+
+- name: Creating vlans config
+  template: src=vlans.j2 dest={{ tmp_dir }}/vlans.cfg

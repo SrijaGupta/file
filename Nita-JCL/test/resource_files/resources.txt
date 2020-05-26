@@ -1,0 +1,13 @@
+*** Settings ***
+Documentation   A resource file with reusable keywords and variables
+Resource 	common.txt
+Library		pybot_jrouter.py     	user=northstar  	target=10.102.164.218    	password=Embe1mpls        WITH NAME   ${device}
+		
+
+*** Variables ***
+
+${JUNIPER_COMMON}=	${CURDIR}/..
+
+*** Keywords ***
+
+

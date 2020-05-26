@@ -1,0 +1,40 @@
+---
+OS_package:
+OS_version:
+autonomous_system: 7
+core_interfaces:
+- desc: '*** to vqfx1 ***'
+  int: em3
+  ip: 10.30.137.2
+  mask: 30
+- desc: '*** to vqfx2 ***'
+  int: em4
+  ip: 10.30.147.2
+  mask: 30
+ip_interfaces:
+- int: em5
+  ip: 10.30.83.1
+  mask: 24
+loopback_interface:
+  ip: 10.30.100.7
+management_interface:
+  int: em0
+  ip: 100.123.15.4
+  mask: 16
+node:
+  console:
+    re0:
+      port: 20029
+      server: '{{ vm_host_address.stdout }}'
+  oob:
+    re0_address: '{{ management_interface.ip }}'
+protocol_bgp:
+- group: CLOS
+  neighbors:
+  - asn: 3
+    name: 10.30.137.1
+  - asn: 4
+    name: 10.30.147.1
+routing_options:
+- destination: 100.123.0.1
+  static: 0.0.0.0/0

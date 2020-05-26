@@ -1,0 +1,27 @@
+#jinja2:lstrip_blocks: True
+policy-options {
+    policy-statement EXPORT-ALL {
+        from {
+            protocol [ local direct static ];
+        }
+        then accept;
+    }
+    policy-statement ospf-to-bgp {
+        term 1 {
+            from protocol ospf;
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+    }
+    policy-statement to-ospf {
+        term 1 {
+            from {
+                protocol static;
+                route-filter {{ route_filter }} exact;
+            }
+        }
+        then accept;
+    }
+}

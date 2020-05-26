@@ -1,0 +1,15 @@
+[all:children]
+routers
+switches
+
+[routers]
+vmx1
+vmx2
+
+[switches]
+vqfx1 
+vqfx2
+vqfx3
+vqfx4
+vqfx5
+

@@ -1,0 +1,18 @@
+#jinja2:lstrip_blocks: True
+protocols {
+    ospf {
+{% for a in protocol_ospf.areas %}
+        area {{ a.area }} {
+{% for i in a.interfaces %}
+{% if i.passive is defined %}
+            interface {{ i.int }} {
+                passive;
+            }
+{% else %}
+            interface {{ i.int }};
+{% endif %}
+{% endfor %}
+        }
+{% endfor %}
+    }
+}

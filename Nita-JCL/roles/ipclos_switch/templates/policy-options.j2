@@ -1,0 +1,9 @@
+#jinja2:lstrip_blocks: True
+policy-options {
+    policy-statement EXPORT-ALL {
+        from {
+            protocol [ local direct ];
+        }
+        then accept;
+    }
+}

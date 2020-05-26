@@ -1,0 +1,34 @@
+description: QFX_Fabric
+name: QFX_Fabric_0.1
+
+action:
+  - name: Noob
+    jenkins_url: noob_qfx_fabric
+    #must be one of NOOB, BUILD or TEST
+    category: NOOB
+    configuration:
+      shell_command: 'python write_yaml_files.py; docker run -u root -v "/var/nita_project:/project:rw" -v "/var/nita_configs:/var/tmp/build:rw" --rm --name ansible registry.juniper.net/nita/ansible:3.3.11 /bin/bash -c "cd ${WORKSPACE}; bash noob.sh ${build_dir}"'
+
+  - name: Build
+    jenkins_url: build_qfx_fabric
+    #must be one of NOOB, BUILD or TEST
+    category: BUILD
+    configuration:
+      shell_command: 'python write_yaml_files.py; docker run -u root -v "/var/nita_project:/project:rw" -v "/var/nita_configs:/var/tmp/build:rw" --rm --name ansible registry.juniper.net/nita/ansible:3.3.11 /bin/bash -c "cd ${WORKSPACE}; bash build.sh ${build_dir}"'
+
+  - name: Test
+    jenkins_url: test_qfx_fabric
+    #must be one of NOOB, BUILD or TEST
+    category: TEST
+    configuration:
+      shell_command: 'python write_yaml_files.py; docker run -u root -v "/var/nita_project:/project:rw" -v "/var/nita_configs:/var/tmp/build:rw" --rm --name robot -e ROBOT_OPTIONS="-d ${PWD}/test/outputs" registry.juniper.net/nita/robot:3.1.12 /bin/bash -c "cd ${WORKSPACE}; bash test.sh"'
+      output_path: test/outputs/
+
+  - name: Test client routing
+    jenkins_url: test_qfx_fabric_client_routing
+    #must be one of NOOB, BUILD or TEST
+    category: TEST
+    configuration:
+      shell_command: 'python write_yaml_files.py; docker run -u root -v "/var/nita_project:/project:rw" -v "/var/nita_configs:/var/tmp/build:rw" --rm --name robot -e ROBOT_OPTIONS="-d ${PWD}/test_client_routing/outputs" registry.juniper.net/nita/robot:3.1.12 /bin/bash -c "cd ${WORKSPACE}; bash test_client_routing.sh"'
+      output_path: test_client_routing/outputs/
+

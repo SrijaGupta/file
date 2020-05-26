@@ -1,0 +1,13 @@
+#jinja2:lstrip_blocks: True
+{% if vlans is defined %}
+vlans {
+{% for vlan in vlans %}
+    {{ vlan.name }} {
+        vlan-id {{ vlan.id }};
+        {% if vlan.irb is defined %}
+        l3-interface {{ vlan.irb }};
+        {% endif %}
+    }
+{% endfor %}
+}
+{% endif %}

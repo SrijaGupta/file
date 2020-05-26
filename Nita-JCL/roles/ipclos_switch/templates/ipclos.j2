@@ -1,0 +1,125 @@
+#jinja2:lstrip_blocks: True
+interfaces {
+{% for intf in core_interfaces %}
+    {{ intf.int }} {
+{% if intf.desc is defined %}
+        description "{{ intf.desc }}";
+{% endif %}
+{% if intf.mac is defined %}
+        mac {{ intf.mac }};
+{% endif %}
+{% if intf.ip is defined %}
+        unit 0 {
+            family inet {
+                address {{ intf.ip }}/{{ intf.mask }};
+            }
+        }
+{% endif %}
+    }
+{% endfor %}
+
+    {{ management_interface.int }} {
+        unit 0 {
+            description "*** management ***";
+            family inet {
+{% if management_interface.ip is defined %}
+                address {{ management_interface.ip }}/{{ management_interface.mask }};
+{% else %}
+                dhcp;
+{% endif %}
+            }
+        }
+    }
+
+{% if control_interface is defined %}
+    {{ control_interface.int }} {
+        unit 0 {
+            description "*** vqfx pfe control interface ***";
+            family inet {
+                address {{ control_interface.ip }}/{{ control_interface.mask }};
+            }
+        }
+    }
+{% endif %}
+
+{% if bridge_interfaces is defined %}
+    {% for intf in bridge_interfaces %}
+    irb {
+        unit {{ intf.irb }} {
+            family inet {
+                address {{ intf.ip }}/{{ intf.mask }};
+            }
+        }
+    }
+    {% endfor %}
+{% endif %}
+{% if access_interfaces is defined %}
+    {% for intf in access_interfaces %}
+    {{ intf.int }} {
+        unit 0 {
+        {% if intf.desc is defined %}
+        description "{{ intf.desc }}";
+        {% endif %}
+            family ethernet-switching {
+                interface-mode access;
+                vlan {
+                    members {{ intf.vlan }};
+                }
+            }
+        }
+    }
+    {% endfor %}
+{% endif %}
+{% if ip_interfaces is defined %}
+    {% for intf in ip_interfaces %}
+    {{ intf.int }} {
+        unit 0 {
+        {% if intf.desc is defined %}
+        description "{{ intf.desc }}";
+        {% endif %}
+            family inet {
+		address {{ intf.ip }}/{{ intf.mask }};
+            }
+        }
+    }
+    {% endfor %}
+{% endif %}
+    lo0 {
+        unit 0 {
+            description "*** loopback ***";
+            family inet {
+                address {{ loopback_interface.ip }}/32;
+            }
+        }
+    }
+}
+
+protocols {
+    bgp {
+	export EXPORT-ALL;
+{% for bgp in protocol_bgp %}
+        group {{ bgp.group }} {
+            type external;
+            family inet {
+                unicast;
+            }
+{% for neighbor in bgp.neighbors %}
+            neighbor {{ neighbor.name }} {
+                peer-as {{ neighbor.asn }};
+            }
+{% endfor %}
+        }
+{% endfor %}
+    }
+}
+
+forwarding-options {
+    storm-control-profiles default {
+        all;
+    }
+}
+protocols {
+    igmp-snooping {
+        vlan default;
+    }
+}

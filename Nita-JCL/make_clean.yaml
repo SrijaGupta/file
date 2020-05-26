@@ -1,0 +1,14 @@
+---
+- name: Creating build directories for each host
+  hosts: all
+  connection: local
+  ignore_errors: yes
+  tasks:
+    - name: remove host build temp directory
+      file: path={{ build_dir }} state=absent
+    - name: create host build temp directory
+      file: path={{ tmp_dir }} state=directory mode=0777
+    - name: create ansible log directory for config diff during push
+      file: path={{ build_dir }}/log state=directory mode=0777
+    - name: create ansible log file
+      file: path={{ log }} state=touch mode=0666

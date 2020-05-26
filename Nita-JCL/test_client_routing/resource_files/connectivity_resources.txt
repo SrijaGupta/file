@@ -1,0 +1,76 @@
+# <*******************
+# 
+# Copyright 2016 Juniper Networks, Inc. All rights reserved.
+# Licensed under the Juniper Networks Script Software License (the "License").
+# You may not use this script file except in compliance with the License, which is located at
+# http://www.juniper.net/support/legal/scriptlicense/
+# Unless required by applicable law or otherwise agreed to in writing by the parties, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# 
+# *******************>
+*** Settings ***
+Documentation   A resource file with reusable keywords and variables
+Library		String
+
+*** Keywords ***
+
+Load Configuration From Template
+	[ARGUMENTS]	${device}	${template}	${template_format}	${template_variables}
+
+	Run Keyword	${device}.Load Configuration From Template	${device}	jinja2_file=${template}	template_vars=${template_variables}	format=${template_format}
+
+
+Load Configuration From File
+	[ARGUMENTS]	${device}	${conf_path}	${conf_format}	${comment}
+
+	Run Keyword	${device}.Load Configuration From File 	${device}	path=${conf_path}		format=${conf_format}		commit_comment=${comment}
+
+
+Configure Interface On Device
+	[ARGUMENTS]	${device}	${device_ip}	${device_interface}
+
+	${template_args}=	Run Keyword	Create Dictionary	interface=${device_interface}	ip_address=${device_ip}
+
+	#Push config to device
+	Run Keyword	Load Configuration From Template	${device}	${EXECDIR}/templates/${device}/config_IP_on_device.j2	set	${template_args}
+
+
+Configure Vlan Interface On Device
+	[ARGUMENTS]	${device}	${device_ip}	${device_interface}	${interface_unit}	${vlan_id}
+
+	${template_args}=	Run Keyword	Create Dictionary	ip_address=${device_ip}	interface=${device_interface}	interface_unit=${interface_unit}	vlan_id=${vlan_id}
+
+	#Push config to device
+	Run Keyword	Load Configuration From Template	${device}	${EXECDIR}/templates/${device}/config_vlan_interface_on_device.j2	set	${template_args}
+
+Ping Test Between Devices
+	[ARGUMENTS]	${device.one}	${device.two}	${device.one.ip_address}	${device.two.ip_address}
+
+	${device_one_ping_response}=	Run Keyword	${device.one}.Commands Executor	command=ping inet count 1 ${device.two.ip_address}		format=xml	xpath=//packet-loss
+	${device_two_ping_response}=	Run Keyword	${device.two}.Commands Executor	command=ping inet count 1 ${device.one.ip_address}		format=xml	xpath=//packet-loss
+
+ 	#Check connectivity
+ 	Should Be Equal	${device_one_ping_response}	0
+ 	Should Be Equal	${device_two_ping_response}	0
+
+Ping Test From Box
+	[ARGUMENTS]	${box}	${box_ip}
+
+	#Ping test
+	${ping_box_response}=	Run Keyword	${box}.Execute Command	cli_command=ping -c 1 ${box_ip}
+
+	#Check Response
+	Should Contain	${ping_box_response}	1 packets transmitted, 1 received, 0% packet loss
+
+Configure Interface on Box
+	[ARGUMENTS]	${box}	${box_interface}	${box_ip}	${sudo_password}
+
+	#Configure interface
+	${interface_config_result}=	Run Keyword	${box}.Execute Command	cli_command=echo ${sudo_password} | sudo -S ifconfig ${box_interface} ${box_ip}
+
+Configure Route on Box
+	[ARGUMENTS]	${box}	${network}	${gateway}	${sudo_password}
+
+	#Configure route
+	${route_config_result}=	Run Keyword	${box}.Execute Command	cli_command=echo ${sudo_password} | sudo -S route add -net ${network} gw ${gateway}
+

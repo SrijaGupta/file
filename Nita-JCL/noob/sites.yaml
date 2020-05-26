@@ -1,0 +1,23 @@
+---
+- import_playbook: ../make_clean.yaml
+- import_playbook: ../make_etc_hosts.yaml
+
+- hosts: all
+  connection: local
+  gather_facts: no
+  pre_tasks:
+    - name: "Determine VM Host Address"
+      local_action: "shell netstat -rn | grep '^0.0.0.0 ' | awk '{print $2}'"
+      register: vm_host_address
+
+- hosts: routers
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: junos-noob }
+
+- hosts: switches
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: junos-noob }

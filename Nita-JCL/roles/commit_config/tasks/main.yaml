@@ -1,0 +1,39 @@
+---
+# <*******************
+# 
+# Copyright 2016 Juniper Networks, Inc. All rights reserved.
+# Licensed under the Juniper Networks Script Software License (the "License").
+# You may not use this script file except in compliance with the License, which is located at
+# http://www.juniper.net/support/legal/scriptlicense/
+# Unless required by applicable law or otherwise agreed to in writing by the parties, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# 
+# *******************>
+- name: assembling configurations
+  assemble:
+    src={{ tmp_dir }}
+    dest={{ junos_conf }}
+    mode={{ conf_file_mode | default('666') }}
+    regexp=.+\.cfg
+
+- name: Test for build variable
+  set_fact:
+    build: "manual"
+  when: build is not defined
+
+- name: Pushing config ... please wait
+  juniper_junos_config:
+      user: "{{ netconf_user }}"
+      passwd: "{{ netconf_passwd }}"
+      load: 'override'
+      src: "{{ junos_conf }}"
+      commit: true
+      diffs_file: "{{build_dir}}/log/{{ inventory_hostname }}-diff-{{ build }}.log"
+      logfile: "{{ log }}"
+      comment: "Jenkins {{ build }}"
+      timeout: "{{ netconf_timeout | default('300') }}"
+  register: response
+- name: Commit response
+  debug:
+      var: response
+

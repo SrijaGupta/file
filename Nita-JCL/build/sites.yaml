@@ -1,0 +1,26 @@
+---
+- import_playbook: ../make_clean.yaml
+- import_playbook: ../make_etc_hosts.yaml
+
+- hosts: all
+  pre_tasks:
+  connection: local
+  roles:
+    - { role: ipclos_common }
+
+- hosts: switches
+  connection: local
+  roles:
+    - { role: ipclos_switch }
+
+- hosts: routers
+  connection: local
+  roles:
+    - { role: ipclos_router }
+
+- hosts: all
+  connection: local
+  gather_facts: no
+  roles:
+    - { role: commit_config }
+#    - { role: build_config }

@@ -1,0 +1,9 @@
+---
+- name: Creating common system config
+  template: src=system.j2 dest={{ tmp_dir }}/system.cfg
+
+- name: Creating common SNMP config
+  template: src=snmp.j2 dest={{ tmp_dir }}/snmp.cfg
+
+- name: Creating common routing config
+  template: src=routing_options.j2 dest={{ tmp_dir }}/routing_options.cfg

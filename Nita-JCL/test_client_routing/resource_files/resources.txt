@@ -1,0 +1,16 @@
+*** Settings ***
+Documentation	A resource file with reusable keywords and variables
+
+Variables	${EXECDIR}/variables_file/variables.py
+
+Resource	${JUNIPER_COMMON}/resource_files/common.txt
+
+Library	${JUNIPER_COMMON}/libraries/pybot_connections.py	user=${client_user}	target=${client1_mgmt_ip}	password=${client_password}	port=22	WITH NAME	client1
+Library	${JUNIPER_COMMON}/libraries/pybot_connections.py	user=${client_user}	target=${client2_mgmt_ip}	password=${client_password}	port=22	WITH NAME	client2
+Library	${JUNIPER_COMMON}/libraries/pybot_connections.py	user=${client_user}	target=${client3_mgmt_ip}	password=${client_password}	port=22	WITH NAME	client3
+
+*** Variables ***
+${JUNIPER_COMMON}=	${CURDIR}/..
+
+*** Keywords ***
+

@@ -1,0 +1,2 @@
+
+21 May 00:45:45 ntpdate[49609]: no server suitable for synchronization found

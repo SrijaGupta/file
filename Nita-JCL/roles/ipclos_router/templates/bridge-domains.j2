@@ -1,0 +1,12 @@
+#jinja2:lstrip_blocks: True
+bridge-domains {
+{% for bridge in bridge_domains %}
+    {{ bridge.name }} {
+        domain-type bridge;
+        vlan-id {{ bridge.id }};
+        {% if bridge.irb is defined %}
+        routing-interface {{ bridge.irb }};
+        {% endif %}
+    }
+{% endfor %}
+}

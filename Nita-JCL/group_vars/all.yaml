@@ -1,0 +1,52 @@
+---
+OS_dir: /var/tmp/
+build_dir: /var/tmp/build
+client_password: Juniper!1
+client_user: jcluser
+clients:
+- gateway: 10.30.81.1
+  ip: 10.30.81.2
+  mgmt_ip: 100.123.35.0
+  name: client1
+  subnet: 10.30.81.0/24
+- gateway: 10.30.82.1
+  ip: 10.30.82.2
+  mgmt_ip: 100.123.35.1
+  name: client2
+  subnet: 10.30.82.0/24
+- gateway: 10.30.83.1
+  ip: 10.30.83.2
+  mgmt_ip: 100.123.35.2
+  name: client3
+  subnet: 10.30.83.0/24
+final_push: 'False'
+junos_conf: '{{build_dir}}/{{ inventory_hostname }}/junos.conf'
+log: '{{build_dir}}/ansible-run.log'
+log_dir: '{{build_dir}}/log'
+login_message: '***********************************************************************\nThis
+  system is restricted to __________, authorized users for legitimate\nbusiness purposes
+  only. All activity on the system will be logged and\nis subject to monitoring. Unauthorized
+  access, use or modification\nof computers, data therein or data in transit to or
+  from the computers\nis a violation of state and federal laws. Unauthorized activity
+  will\nbe reported to the law enforcement for investigation and possible\nprosecution.
+  __________ reserves the right to investigate, refer for\nprosecution and pursue
+  monetary damages in civil actions in the event\nof unauthorized access.\n***********************************************************************\n'
+netconf_passwd: Juniper!1
+netconf_port: 22
+netconf_user: root
+password_hashes:
+  netadmin_user: $1$a31gJmWG$h9ohikT1ajySf/tVH.gmv1
+  root_user: $1$DbZ1Q3pj$s48cZytjsmSJRUJAf4LdM.
+protocol_hashes:
+  bgp: $9$z2P3F9pBIEyevO1X-Vboa69Ct1R
+  ospf: $9$emcMLNs2aikPdbkP5Q9CKM8
+  rsvp: $9$emcMLNs2aikPdbkP5Q9CKM8
+route_filter: 10.30.0.0/16
+snmp:
+  communities:
+  - name: public
+  contact: aburston@juniper.net
+  location: JCL Labs
+tmp_dir: '{{build_dir}}/{{inventory_hostname}}/tmp'
+wait_time: 800
+xml_dir: '{{build_dir}}/{{ inventory_hostname }}/xml'
