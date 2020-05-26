@@ -1,0 +1,24 @@
+packets:
+     USE_TEMPLATE: [tests/unit/trafficgen/scapy/TCP_packet_template_new_updated.yaml,tests/unit/trafficgen/scapy/Dot1Q_packet_template_new_updated.yaml]
+     packet1:
+         template['TCP_SYN']:
+             Headers: [MAC,VLAN,IP,TCP]
+     packet2:
+         template['TCP_SYN']:
+             Dot1Q.vlan: 875 
+             IP.src: 182.16.145.9
+             Headers: [MAC,VLAN,IP]
+     packet3:
+         template['TCP_SYN']:
+             IP.src: 172.16.99.2
+             IP.dst: 172.16.99.1
+             Headers: [MAC,IP,TCP]
+     packet4:
+         template['Dot1Q']:
+             Ether.src: 00:11:22:44:55:66
+             Ether.dst: 00:99:44:44:55:88
+             Dot1Q.vlan: 4000
+             IP.src: 192.16.10.2
+             IP.dst: 192.16.20.1
+             Headers: [MAC,VLAN,IP]
+

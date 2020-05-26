@@ -1,0 +1,1583 @@
+*** Settings ***
+Documentation     Resource file for Spirent Device
+Library           BuiltIn
+Library           Collections
+Library           spirent.py
+
+*** Variables ***
+
+*** Keywords ***
+
+get port handle
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    ${return_params}    invoke    ${device}    get_port_handle    from_spirent_robot=True    &{request_params}
+
+emulation http control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation http control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_http_control    from_spirent_robot=True    &{request_params}
+
+emulation oam config msg
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation oam config msg API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_oam_config_msg    from_spirent_robot=True    &{request_params}
+
+emulation pcep stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pcep stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pcep_stats    from_spirent_robot=True    &{request_params}
+
+emulation rsvp tunnel config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp tunnel config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_tunnel_config    from_spirent_robot=True    &{request_params}
+
+emulation lacp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lacp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lacp_config    from_spirent_robot=True    &{request_params}
+
+emulation lldp dcbx tlv config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lldp dcbx tlv config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lldp_dcbx_tlv_config    from_spirent_robot=True    &{request_params}
+
+l2tpv3 stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tpv3 stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tpv3_stats    from_spirent_robot=True    &{request_params}
+
+emulation http config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation http config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_http_config    from_spirent_robot=True    &{request_params}
+
+emulation sip stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation sip stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_sip_stats    from_spirent_robot=True    &{request_params}
+
+pcs error config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pcs error config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pcs_error_config    from_spirent_robot=True    &{request_params}
+
+fc config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fc config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fc_config    from_spirent_robot=True    &{request_params}
+
+emulation efm config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation efm config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_efm_config    from_spirent_robot=True    &{request_params}
+
+emulation ldp route element config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ldp route element config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ldp_route_element_config    from_spirent_robot=True    &{request_params}
+
+emulation ldp route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ldp route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ldp_route_config    from_spirent_robot=True    &{request_params}
+
+l2tp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tp_control    from_spirent_robot=True    &{request_params}
+
+emulation vxlan config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vxlan config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vxlan_config    from_spirent_robot=True    &{request_params}
+
+emulation twamp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation twamp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_twamp_stats    from_spirent_robot=True    &{request_params}
+
+emulation igmp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_info    from_spirent_robot=True    &{request_params}
+
+emulation bgp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_config    from_spirent_robot=True    &{request_params}
+
+emulation igmp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_config    from_spirent_robot=True    &{request_params}
+
+emulation dhcp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_control    from_spirent_robot=True    &{request_params}
+
+emulation ancp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ancp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ancp_control    from_spirent_robot=True    &{request_params}
+
+emulation igmp querier control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp querier control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_querier_control    from_spirent_robot=True    &{request_params}
+
+emulation mpls vpn control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls vpn control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_vpn_control    from_spirent_robot=True    &{request_params}
+
+l2tpv3 config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tpv3 config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tpv3_config    from_spirent_robot=True    &{request_params}
+
+interface stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In interface stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    interface_stats    from_spirent_robot=True    &{request_params}
+
+emulation mpls tp port config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls tp port config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_tp_port_config    from_spirent_robot=True    &{request_params}
+
+link config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In link config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    link_config    from_spirent_robot=True    &{request_params}
+
+emulation ipv6 autoconfig control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ipv6 autoconfig control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ipv6_autoconfig_control    from_spirent_robot=True    &{request_params}
+
+fip traffic config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fip traffic config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fip_traffic_config    from_spirent_robot=True    &{request_params}
+
+emulation openflow control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation openflow control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_openflow_control    from_spirent_robot=True    &{request_params}
+
+emulation multicast group config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation multicast group config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_multicast_group_config    from_spirent_robot=True    &{request_params}
+
+emulation dhcp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_config    from_spirent_robot=True    &{request_params}
+
+#invoke
+#    [Arguments]    ${device}    &{request_params}
+#    [return]       ${return_params}
+#    [Documentation]
+#    Log To Console  In invoke API of Resource file with arguments ${request_params}
+#    ${return_params}    invoke    ${device}    invoke    from_spirent_robot=True    &{request_params}
+
+emulation bgp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_control    from_spirent_robot=True    &{request_params}
+
+emulation bgp route info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp route info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_route_info    from_spirent_robot=True    &{request_params}
+
+emulation rsvp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_control    from_spirent_robot=True    &{request_params}
+
+fcoe control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fcoe control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fcoe_control    from_spirent_robot=True    &{request_params}
+
+emulation ospf topology route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf topology route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_topology_route_config    from_spirent_robot=True    &{request_params}
+
+random error control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In random error control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    random_error_control    from_spirent_robot=True    &{request_params}
+
+packet control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_control    from_spirent_robot=True    &{request_params}
+
+traffic stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In traffic stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    traffic_stats    from_spirent_robot=True    &{request_params}
+
+emulation ospfv3 info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospfv3 info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospfv3_info    from_spirent_robot=True    &{request_params}
+
+pppox control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_control    from_spirent_robot=True    &{request_params}
+
+emulation convergence config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation convergence config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_convergence_config    from_spirent_robot=True    &{request_params}
+
+emulation oam config ma meg
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation oam config ma meg API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_oam_config_ma_meg    from_spirent_robot=True    &{request_params}
+
+pppox config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_config    from_spirent_robot=True    &{request_params}
+
+emulation mld info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mld info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mld_info    from_spirent_robot=True    &{request_params}
+
+emulation bfd config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bfd config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bfd_config    from_spirent_robot=True    &{request_params}
+
+emulation oam control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation oam control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_oam_control    from_spirent_robot=True    &{request_params}
+
+emulation msti config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation msti config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_msti_config    from_spirent_robot=True    &{request_params}
+
+get handles
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In get handles API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    get_handles    from_spirent_robot=True    &{request_params}
+
+test rfc2544 config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc2544 config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc2544_config    from_spirent_robot=True    &{request_params}
+
+interface control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In interface control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    interface_control    from_spirent_robot=True    &{request_params}
+
+emulation ospfv2 info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospfv2 info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospfv2_info    from_spirent_robot=True    &{request_params}
+
+emulation nonvxlan port config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation nonvxlan port config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_nonvxlan_port_config    from_spirent_robot=True    &{request_params}
+
+emulation dot1x config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dot1x config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dot1x_config    from_spirent_robot=True    &{request_params}
+
+emulation dhcp group config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp group config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_group_config    from_spirent_robot=True    &{request_params}
+
+fcoe config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fcoe config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fcoe_config    from_spirent_robot=True    &{request_params}
+
+emulation bfd session config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bfd session config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bfd_session_config    from_spirent_robot=True    &{request_params}
+
+emulation ptp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ptp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ptp_control    from_spirent_robot=True    &{request_params}
+
+test rfc3918 control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc3918 control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc3918_control    from_spirent_robot=True    &{request_params}
+
+emulation rsvp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_info    from_spirent_robot=True    &{request_params}
+
+test rfc2889 config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc2889 config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc2889_config    from_spirent_robot=True    &{request_params}
+
+arp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In arp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    arp_control    from_spirent_robot=True    &{request_params}
+
+emulation lldp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lldp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lldp_control    from_spirent_robot=True    &{request_params}
+
+pcs error control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pcs error control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pcs_error_control    from_spirent_robot=True    &{request_params}
+
+emulation vpls site config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vpls site config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vpls_site_config    from_spirent_robot=True    &{request_params}
+
+emulation pim group config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pim group config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pim_group_config    from_spirent_robot=True    &{request_params}
+
+connect
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In connect API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    connect    from_spirent_robot=True    &{request_params}
+
+close
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In close API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    close    from_spirent_robot=True    &{request_params}
+
+emulation mpls tp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls tp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_tp_config    from_spirent_robot=True    &{request_params}
+
+emulation igmp querier info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp querier info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_querier_info    from_spirent_robot=True    &{request_params}
+
+emulation dot1x control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dot1x control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dot1x_control    from_spirent_robot=True    &{request_params}
+
+emulation twamp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation twamp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_twamp_config    from_spirent_robot=True    &{request_params}
+
+create csv file
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In create csv file API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    create_csv_file    from_spirent_robot=True    &{request_params}
+
+emulation ldp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ldp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ldp_info    from_spirent_robot=True    &{request_params}
+
+emulation bgp route generator
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp route generator API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_route_generator    from_spirent_robot=True    &{request_params}
+
+emulation lldp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lldp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lldp_info    from_spirent_robot=True    &{request_params}
+
+emulation ospf lsa generator
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf lsa generator API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_lsa_generator    from_spirent_robot=True    &{request_params}
+
+test config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_config    from_spirent_robot=True    &{request_params}
+
+emulation stp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation stp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_stp_stats    from_spirent_robot=True    &{request_params}
+
+alarms control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In alarms control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    alarms_control    from_spirent_robot=True    &{request_params}
+
+emulation mvpn customer port config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn customer port config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_customer_port_config    from_spirent_robot=True    &{request_params}
+
+emulation bgp custom attribute config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp custom attribute config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_custom_attribute_config    from_spirent_robot=True    &{request_params}
+
+random error config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In random error config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    random_error_config    from_spirent_robot=True    &{request_params}
+
+emulation isis lsp generator
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation isis lsp generator API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_isis_lsp_generator    from_spirent_robot=True    &{request_params}
+
+fill global variables
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fill global variables API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fill_global_variables    from_spirent_robot=True    &{request_params}
+
+emulation mpls l3vpn pe config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls l3vpn pe config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_l3vpn_pe_config    from_spirent_robot=True    &{request_params}
+
+emulation openflow config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation openflow config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_openflow_config    from_spirent_robot=True    &{request_params}
+
+emulation ospf tlv config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf tlv config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_tlv_config    from_spirent_robot=True    &{request_params}
+
+emulation ldp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ldp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ldp_control    from_spirent_robot=True    &{request_params}
+
+emulation bgp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_info    from_spirent_robot=True    &{request_params}
+
+emulation mpls l2vpn site config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls l2vpn site config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_l2vpn_site_config    from_spirent_robot=True    &{request_params}
+
+emulation rsvp custom object config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp custom object config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_custom_object_config    from_spirent_robot=True    &{request_params}
+
+sequencer control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In sequencer control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    sequencer_control    from_spirent_robot=True    &{request_params}
+
+emulation pcep control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pcep control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pcep_control    from_spirent_robot=True    &{request_params}
+
+traffic config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In traffic config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    traffic_config    from_spirent_robot=True    &{request_params}
+
+emulation rip config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rip config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rip_config    from_spirent_robot=True    &{request_params}
+
+test rfc3918 config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc3918 config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc3918_config    from_spirent_robot=True    &{request_params}
+
+emulation twamp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation twamp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_twamp_control    from_spirent_robot=True    &{request_params}
+
+packet config buffers
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet config buffers API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_config_buffers    from_spirent_robot=True    &{request_params}
+
+emulation twamp session config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation twamp session config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_twamp_session_config    from_spirent_robot=True    &{request_params}
+
+emulation efm control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation efm control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_efm_control    from_spirent_robot=True    &{request_params}
+
+drv stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In drv stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    drv_stats    from_spirent_robot=True    &{request_params}
+
+emulation device config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation device config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_device_config    from_spirent_robot=True    &{request_params}
+
+emulation stp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation stp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_stp_control    from_spirent_robot=True    &{request_params}
+
+pppox server control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox server control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_server_control    from_spirent_robot=True    &{request_params}
+
+l2tpv3 control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tpv3 control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tpv3_control    from_spirent_robot=True    &{request_params}
+
+emulation oam config topology
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation oam config topology API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_oam_config_topology    from_spirent_robot=True    &{request_params}
+
+emulation dhcp server control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp server control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_server_control    from_spirent_robot=True    &{request_params}
+
+pppox stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_stats    from_spirent_robot=True    &{request_params}
+
+pppox server config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox server config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_server_config    from_spirent_robot=True    &{request_params}
+
+pppox server stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In pppox server stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    pppox_server_stats    from_spirent_robot=True    &{request_params}
+
+interface config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In interface config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    interface_config    from_spirent_robot=True    &{request_params}
+
+emulation oam info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation oam info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_oam_info    from_spirent_robot=True    &{request_params}
+
+forty hundred gig l1 results
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In forty hundred gig l1 results API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    forty_hundred_gig_l1_results    from_spirent_robot=True    &{request_params}
+
+emulation vxlan control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vxlan control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vxlan_control    from_spirent_robot=True    &{request_params}
+
+packet config filter
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet config filter API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_config_filter    from_spirent_robot=True    &{request_params}
+
+emulation mstp region config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mstp region config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mstp_region_config    from_spirent_robot=True    &{request_params}
+
+ppp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In ppp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    ppp_config    from_spirent_robot=True    &{request_params}
+
+emulation mvpn control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_control    from_spirent_robot=True    &{request_params}
+
+emulation gre config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation gre config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_gre_config    from_spirent_robot=True    &{request_params}
+
+fcoe stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fcoe stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fcoe_stats    from_spirent_robot=True    &{request_params}
+
+emulation ptp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ptp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ptp_stats    from_spirent_robot=True    &{request_params}
+
+start devices
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In start devices API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    start_devices    from_spirent_robot=True    &{request_params}
+
+emulation ping
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ping API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ping    from_spirent_robot=True    &{request_params}
+
+emulation openflow stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation openflow stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_openflow_stats    from_spirent_robot=True    &{request_params}
+
+traffic config ospf
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In traffic config ospf API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    traffic_config_ospf    from_spirent_robot=True    &{request_params}
+
+traffic control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In traffic control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    traffic_control    from_spirent_robot=True    &{request_params}
+
+load xml
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In load xml API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    load_xml    from_spirent_robot=True    &{request_params}
+
+emulation mpls l2vpn pe config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls l2vpn pe config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_l2vpn_pe_config    from_spirent_robot=True    &{request_params}
+
+emulation vxlan stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vxlan stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vxlan_stats    from_spirent_robot=True    &{request_params}
+
+arp nd config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In arp nd config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    arp_nd_config    from_spirent_robot=True    &{request_params}
+
+device info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In device info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    device_info    &{request_params}
+
+emulation stp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation stp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_stp_config    from_spirent_robot=True    &{request_params}
+
+emulation mvpn config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_config    from_spirent_robot=True    &{request_params}
+
+emulation http phase config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation http phase config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_http_phase_config    from_spirent_robot=True    &{request_params}
+
+packet stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_stats    from_spirent_robot=True    &{request_params}
+
+emulation convergence info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation convergence info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_convergence_info    from_spirent_robot=True    &{request_params}
+
+fc stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fc stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fc_stats    from_spirent_robot=True    &{request_params}
+
+emulation bfd control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bfd control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bfd_control    from_spirent_robot=True    &{request_params}
+
+packet config pattern
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet config pattern API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_config_pattern    from_spirent_robot=True    &{request_params}
+
+emulation pcep config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pcep config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pcep_config    from_spirent_robot=True    &{request_params}
+
+emulation rip control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rip control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rip_control    from_spirent_robot=True    &{request_params}
+
+emulation mvpn info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_info    from_spirent_robot=True    &{request_params}
+
+emulation pim control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pim control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pim_control    from_spirent_robot=True    &{request_params}
+
+emulation isis info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation isis info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_isis_info    from_spirent_robot=True    &{request_params}
+
+emulation vxlan port config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vxlan port config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vxlan_port_config    from_spirent_robot=True    &{request_params}
+
+emulation ldp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ldp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ldp_config    from_spirent_robot=True    &{request_params}
+
+emulation ospf control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_control    from_spirent_robot=True    &{request_params}
+
+test rfc2544 info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc2544 info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc2544_info    from_spirent_robot=True    &{request_params}
+
+emulation dhcp server stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp server stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_server_stats    from_spirent_robot=True    &{request_params}
+
+emulation rip route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rip route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rip_route_config    from_spirent_robot=True    &{request_params}
+
+emulation rsvpte tunnel control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvpte tunnel control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvpte_tunnel_control    from_spirent_robot=True    &{request_params}
+
+fc control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fc control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fc_control    from_spirent_robot=True    &{request_params}
+
+emulation efm stat
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation efm stat API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_efm_stat    from_spirent_robot=True    &{request_params}
+
+emulation vxlan wizard config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation vxlan wizard config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_vxlan_wizard_config    from_spirent_robot=True    &{request_params}
+
+emulation rip info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rip info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rip_info    from_spirent_robot=True    &{request_params}
+
+emulation dhcp server config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp server config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_server_config    from_spirent_robot=True    &{request_params}
+
+emulation bfd info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bfd info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bfd_info    from_spirent_robot=True    &{request_params}
+
+emulation ipv6 autoconfig
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ipv6 autoconfig API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ipv6_autoconfig    from_spirent_robot=True    &{request_params}
+
+emulation ancp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ancp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ancp_config    from_spirent_robot=True    &{request_params}
+
+emulation mpls l3vpn site config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls l3vpn site config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_l3vpn_site_config    from_spirent_robot=True    &{request_params}
+
+emulation sip control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation sip control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_sip_control    from_spirent_robot=True    &{request_params}
+
+emulation multicast source config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation multicast source config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_multicast_source_config    from_spirent_robot=True    &{request_params}
+
+fcoe traffic config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In fcoe traffic config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    fcoe_traffic_config    from_spirent_robot=True    &{request_params}
+
+emulation ipv6 autoconfig stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ipv6 autoconfig stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ipv6_autoconfig_stats    from_spirent_robot=True    &{request_params}
+
+test control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_control    from_spirent_robot=True    &{request_params}
+
+imix config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In imix config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    imix_config    from_spirent_robot=True    &{request_params}
+
+emulation http stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation http stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_http_stats    from_spirent_robot=True    &{request_params}
+
+l2tp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tp_stats    from_spirent_robot=True    &{request_params}
+
+emulation bgp route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_route_config    from_spirent_robot=True    &{request_params}
+
+packet config triggers
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet config triggers API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_config_triggers    from_spirent_robot=True    &{request_params}
+
+emulation isis topology route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation isis topology route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_isis_topology_route_config    from_spirent_robot=True    &{request_params}
+
+emulation dhcp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_stats    from_spirent_robot=True    &{request_params}
+
+emulation mvpn vrf route config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn vrf route config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_vrf_route_config    from_spirent_robot=True    &{request_params}
+
+emulation dot1x stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dot1x stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dot1x_stats    from_spirent_robot=True    &{request_params}
+
+test rfc2544 control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc2544 control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc2544_control    from_spirent_robot=True    &{request_params}
+
+emulation lacp info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lacp info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lacp_info    from_spirent_robot=True    &{request_params}
+
+labserver disconnect
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In labserver disconnect API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    labserver_disconnect    from_spirent_robot=True    &{request_params}
+
+emulation ospf lsa config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf lsa config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_lsa_config    from_spirent_robot=True    &{request_params}
+
+l2tp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In l2tp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    l2tp_config    from_spirent_robot=True    &{request_params}
+
+packet info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_info    from_spirent_robot=True    &{request_params}
+
+stop devices
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In stop devices API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    stop_devices    from_spirent_robot=True    &{request_params}
+
+emulation lag config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lag config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lag_config    from_spirent_robot=True    &{request_params}
+
+emulation mpls tp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mpls tp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mpls_tp_control    from_spirent_robot=True    &{request_params}
+
+emulation igmp querier config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp querier config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_querier_config    from_spirent_robot=True    &{request_params}
+
+emulation isis control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation isis control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_isis_control    from_spirent_robot=True    &{request_params}
+
+emulation convergence control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation convergence control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_convergence_control    from_spirent_robot=True    &{request_params}
+
+cleanup session
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In cleanup session API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    cleanup_session    from_spirent_robot=True    &{request_params}
+
+emulation bgp route element config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation bgp route element config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_bgp_route_element_config    from_spirent_robot=True    &{request_params}
+
+emulation lsp switching point tlvs config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lsp switching point tlvs config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lsp_switching_point_tlvs_config    from_spirent_robot=True    &{request_params}
+
+emulation ospf config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_config    from_spirent_robot=True    &{request_params}
+
+emulation ptp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ptp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ptp_config    from_spirent_robot=True    &{request_params}
+
+emulation mld config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mld config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mld_config    from_spirent_robot=True    &{request_params}
+
+emulation mvpn vrf config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn vrf config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_vrf_config    from_spirent_robot=True    &{request_params}
+
+ppp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In ppp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    ppp_stats    from_spirent_robot=True    &{request_params}
+
+packet decode
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In packet decode API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    packet_decode    from_spirent_robot=True    &{request_params}
+
+emulation mvpn vrf traffic config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn vrf traffic config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_vrf_traffic_config    from_spirent_robot=True    &{request_params}
+
+test rfc3918 info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In test rfc3918 info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    test_rfc3918_info    from_spirent_robot=True    &{request_params}
+
+labserver connect
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In labserver connect API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    labserver_connect    from_spirent_robot=True    &{request_params}
+
+emulation http profile config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation http profile config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_http_profile_config    from_spirent_robot=True    &{request_params}
+
+emulation dhcp server relay agent config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation dhcp server relay agent config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_dhcp_server_relay_agent_config    from_spirent_robot=True    &{request_params}
+
+emulation ancp subscriber lines config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ancp subscriber lines config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ancp_subscriber_lines_config    from_spirent_robot=True    &{request_params}
+
+emulation sip config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation sip config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_sip_config    from_spirent_robot=True    &{request_params}
+
+emulation mld group config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mld group config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mld_group_config    from_spirent_robot=True    &{request_params}
+
+alarms stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In alarms stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    alarms_stats    from_spirent_robot=True    &{request_params}
+
+emulation mld control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mld control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mld_control    from_spirent_robot=True    &{request_params}
+
+emulation pim info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pim info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pim_info    from_spirent_robot=True    &{request_params}
+
+emulation lsp ping info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lsp ping info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lsp_ping_info    from_spirent_robot=True    &{request_params}
+
+emulation mvpn provider port config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation mvpn provider port config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_mvpn_provider_port_config    from_spirent_robot=True    &{request_params}
+
+emulation pim config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation pim config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_pim_config    from_spirent_robot=True    &{request_params}
+
+emulation ospf route info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ospf route info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ospf_route_info    from_spirent_robot=True    &{request_params}
+
+emulation rsvp tunnel info
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp tunnel info API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_tunnel_info    from_spirent_robot=True    &{request_params}
+
+emulation l2vpn pe config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation l2vpn pe config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_l2vpn_pe_config    from_spirent_robot=True    &{request_params}
+
+emulation lldp optional tlv config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lldp optional tlv config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lldp_optional_tlv_config    from_spirent_robot=True    &{request_params}
+
+emulation isis config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation isis config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_isis_config    from_spirent_robot=True    &{request_params}
+
+emulation rsvp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation rsvp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_rsvp_config    from_spirent_robot=True    &{request_params}
+
+emulation igmp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_control    from_spirent_robot=True    &{request_params}
+
+emulation ancp stats
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation ancp stats API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_ancp_stats    from_spirent_robot=True    &{request_params}
+
+emulation igmp group config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation igmp group config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_igmp_group_config    from_spirent_robot=True    &{request_params}
+
+emulation lacp control
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lacp control API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lacp_control    from_spirent_robot=True    &{request_params}
+
+emulation lldp config
+    [Arguments]    ${device}    &{request_params}
+    [return]       ${return_params}
+    [Documentation]
+    Log To Console  In emulation lldp config API of Resource file with arguments ${request_params}
+    ${return_params}    invoke    ${device}    emulation_lldp_config    from_spirent_robot=True    &{request_params}

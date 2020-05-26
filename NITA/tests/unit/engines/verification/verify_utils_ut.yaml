@@ -1,0 +1,14 @@
+R0:
+    ospf_interface_check:
+       args:   
+       - intf            
+       cmd: show ospf interface vat[‘intf’] detail
+       xpath: /ospf-interface-information/ospf-interface
+       parameters:
+            interface-type:
+                value: LAN
+            hello-interval:
+                       value: 10
+            dead-interval:
+                       value: 20     
+

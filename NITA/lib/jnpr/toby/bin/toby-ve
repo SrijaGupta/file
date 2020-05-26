@@ -1,0 +1,818 @@
+#!/usr/bin/env python3
+# coding=utf-8
+
+'''
+    Update generic ve templates
+    Usage:
+       toby-ve -s "show chassis fpc" -x mxvc_show_chassis_fpc.xml -t templates/chassis_template.yaml
+'''
+
+import sys
+import getopt
+import os
+import re
+import copy
+import getpass
+import yaml
+import datetime
+import time
+import pexpect
+import socket
+import base64
+from Crypto import Random
+from Crypto.Cipher import AES
+import logging
+import jnpr.toby.engines.verification.ve_template_utils as vt_utils
+#import ve_template_utils as vt_utils
+
+generic_templates_project_id = 3005
+AKEY = b'mysixteenbytekey'
+def decode(cipher):
+    obj2 = AES.new(AKEY, AES.MODE_CFB, iv)
+    return obj2.decrypt(base64.urlsafe_b64decode(cipher))
+
+global logger
+global git_user
+global git_passwd
+global iv
+iv = b'donottrytobreak!'
+git_passwd = decode('wydMIvEgYta9').decode()
+global SCRIPT_START_TIME
+global LOG_DIR
+global GENERIC_TEMPLATES_PATH
+global GENERIC_TEMPLATES_PATH_ALPHA
+global TEMP_GIT_GENERIC_TEMPLATES_PATH
+global TEMP_GIT_COMMAND_OUTPUTS_PATH
+SCRIPT_START_TIME = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+GENERIC_TEMPLATES_PATH_ALPHA = '/homes/mmohan/TOBY/VE/COMMON_TEMPLATE/GIT/ALPHA/jnpr/'
+LOG_DIR = os.getcwd()+'/'+'toby_logs/'+ 'toby_ve_'+SCRIPT_START_TIME+'/'
+os.makedirs(LOG_DIR, exist_ok=True)
+os.system('rm -f latest_toby_logs')
+os.system('ln -s '+ LOG_DIR + ' '+ 'latest_toby_logs')
+TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH = LOG_DIR + 'verifyTemplates/git/generic-templates/verify_templates/jnpr'
+TEMP_GIT_COMMAND_OUTPUTS_PATH = LOG_DIR + 'commandOutputs/git/generic-templates/command_outputs/'
+TEMP_GIT_GENERIC_TEMPLATES_PATH = LOG_DIR + 'verifyTemplates/git/generic-templates/'
+git_user = decode('0-om-re3OEvb_DVR').decode()
+GIT_SYNC_LOG_FILE = LOG_DIR+'git_to_shell_servers_sync.log'
+# set up logging to file - see previous section for more details
+logging.basicConfig(level=logging.DEBUG,
+                    #format='%(asctime)s - %(levelname) - %(message)s',
+                    format=' %(message)s',
+                    #datefmt='%y-%m-%d %H:%M:%S',
+                    filename=LOG_DIR+'debug.log',
+                    filemode='w')
+# define a Handler which writes INFO messages or higher to the sys.stderr
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+# set a format which is simpler for console use
+formatter = logging.Formatter(' %(message)s')
+# tell the handler to use this format
+console.setFormatter(formatter)
+# add the handler to the root logger
+logging.getLogger('').addHandler(console)
+#logger = logging.getLogger('debug')
+logger = logging.getLogger(__name__)
+logger.debug('TEMP_GIT_GENERIC_TEMPLATES_PATH : '+ TEMP_GIT_GENERIC_TEMPLATES_PATH)
+logger.debug('LOG_DIR : ' +  LOG_DIR)
+
+
+
+def update_template_usage():
+    '''
+     Print out usage information
+    '''
+    help_msg = '''
+
+    Update Template tool is an offline tool that helps you to generate, update generic VE templates. 
+    standardized generic templates simplify most of the show command verification in yaml, by using 
+    mostly the leaf node as parameter key, rather than the whole XPath; At the same time, it retains
+    the uniqueness of each key to avoid conflicting xml nodes, and holds the absolute path in the 
+    templates, so there is no ambiguity in the templates.
+    
+    Usage:
+
+      toby-ve  -t|--template <update_options>  -x|--xml_file  <xml_ouput_file>  [-s|--show_cmd <show command>]
+					       -d|--device  <device-name/IP>	[-y|--topo_yaml <Topo yaml file>]
+
+      -t|--template     Invoke an operation like find or update of generic templates	[MANDATORY]
+
+           update_options:
+
+        	update_local 	=> Used to create/update the template using show command output
+                update_sync	=> Same as 'update_local' but it will also push template to GIT
+
+      -x|--xml_file	XML file which contains XML output of the show command
+				For, update_local	[OPTIONAL]
+				For, update_sync	UNSUPPORTED
+      -d|--device	If No topo_yaml, mention device-name or IP to connect.
+                        If topo_yaml used, mention the device to connect (Ex: r0)
+				For, update_local       [OPTIONAL]
+				For, update_sync	[MANDATORY]
+
+      -s|--show_cmd	Show command for which a Template to be generated	[OPTIONAL]
+      -y|--topo_yaml	Topology YAML to be used to connect to the desired-     [OPTIONAL]
+			device to fetch required show command outputs
+
+    Example:
+
+      toby-ve  -t update_local  -x mxvc_show_chassis_fpc.xml  -s "show chassis fpc"
+
+    '''
+    logger.info(help_msg)
+
+def update_template(args):
+    try:
+        opts = getopt.getopt(args, 'ht:s:x:p:y:d:', ['help', 'template=', 'show_cmd=', 'xml_file=', 'template_path=',
+                                                 'topo_yaml=', 'device='])[0]
+        if not opts:
+            logger.info("*** missing arguments ***")
+            update_template_usage()
+            sys.exit()
+    except getopt.GetoptError:
+        logger.info("*** wrong syntax ***")
+        update_template_usage()
+        sys.exit(2)
+
+    #template_dir = 've_templates/'
+    show_cmd = xml_file = template_path = device = topo_yaml = None
+    for opt, arg in opts:
+        if opt in ('-s', '--show_cmd'):
+            show_cmd = arg
+        elif opt in ('-x', '--xml_file'):
+            xml_file = arg
+            if os.path.dirname(xml_file) == '' or ( os.path.dirname(xml_file) != '' and xml_file[0] != '/' ):
+                if os.path.isfile(os.getcwd()+'/'+xml_file):
+                    xml_file = os.getcwd()+'/'+xml_file
+                    logger.debug("XML Filename with Path: " + xml_file)
+                else:
+                    message = vt_utils.color_formatter(
+                                 message = "ERROR: Given xml file \'{}\' does not exists".format(xml_file),
+                                 color = "RED")
+                    logger.info(message)
+                    return False
+              
+        elif opt in ('-p', '--template_path'):
+            template_path = arg
+        elif opt in ('-t', '--template'):
+            template_arg = arg
+        elif opt in ('-y', '--topo_yaml'):
+            topo_yaml = arg
+        elif opt in ('-d', '--device'):
+            device = arg
+        elif opt in ('-h', '--help'):
+            update_template_usage()
+            sys.exit()
+    # todo: check mandatory args, find template_path if not defined
+    if xml_file is None and device is None:
+        if template_arg == 'update_local':
+            logger.info("\nERROR: One of '-x|--xml_file' OR '-d|--device' is Mandatory...")
+        else:
+            logger.info("\nERROR: Mandatory option '-d|--device' is missing for 'update_sync'...")
+        update_template_usage()
+        sys.exit()
+    if template_arg == 'update_sync' and device is None:
+        logger.info("\nERROR: Mandatory option '-d|--device' is missing for 'update_sync'...")
+        update_template_usage()
+        sys.exit()
+
+    show_cmd = vt_utils.get_show_cmd_input(show_cmd, action='update')
+    if device:
+        show_cmd = re.sub(r'<|>', '', show_cmd)
+        #xml_file = vt_utils.verify_xml_file(xml_file, show_cmd, LOG_DIR)
+
+    #logger.info('\nConnecting to device and executing commands...\n')
+    show_cmd, new_xml_file = vt_utils.get_show_cmd_interactively(show_cmd, force_get_output=True, action='update', 
+                                                   topo_yaml=topo_yaml, device=device)
+    if device:
+        xml_file = new_xml_file
+
+    show_cmd = vt_utils.strip_cmd_values(show_cmd)
+    logger.info('\n\tCommand after removing variable values :  {}\n'.format(show_cmd))
+    #if template_path is None:
+    #    template_path = template_dir + show_cmd.split()[1] + '_template.yaml'
+    
+    module_name = show_cmd.split()[1]
+
+    if template_path is None:
+        _template_path = vt_utils.get_template_directory_name_from_show_cmd(TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH, show_cmd)
+        os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True) 
+        git_status =  checkout_module_files_from_git(TEMP_GIT_GENERIC_TEMPLATES_PATH, module_name)
+    else:
+        _template_path = template_path     
+    #my_args = vt_utils.update_template_args(args)     
+
+    logger.debug("\n\tXML File: " + str(xml_file))
+    template_name,_template_path,template_action,template_file_data = vt_utils.update_template(xml_file, show_cmd, _template_path)
+    logger.info("\tTemplate Name : " + template_name)
+    logger.info("\tTemplate Path : " + _template_path)
+
+    if template_path is None and template_arg == 'update_sync' and\
+       input("\n\tPlease verify generated template.\n\tProceed with GIT commit? [y/n] (n):").strip().lower() == 'y':
+        content = yaml.dump(template_file_data, default_flow_style=False, indent=4)
+        user = getpass.getuser()
+        msg = 'VE template "{}" update by {}'.format(template_name, user)
+        file_path = 'verify_templates/jnpr' + '/' + module_name  +'/' + template_name + '.yaml'
+        if template_action == 'update':
+            vt_utils.git_update(file_path=file_path,action='update',content=content,commit_message=msg,branch='dev',
+                                project_id=generic_templates_project_id)
+        else:
+            vt_utils.git_update(file_path=file_path,action='create',content=content,commit_message=msg,branch='dev',
+                                project_id=generic_templates_project_id)
+        
+        os.makedirs(TEMP_GIT_COMMAND_OUTPUTS_PATH, exist_ok=True) 
+        sparse_checkout_path = 'command_outputs/jnpr/'+module_name+'/'+template_name + '/'
+        git_status =  checkout_output_files_from_git(TEMP_GIT_COMMAND_OUTPUTS_PATH, sparse_checkout_path)
+        #TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL  = TEMP_GIT_COMMAND_OUTPUTS_PATH+'jnpr/'+sparse_checkout_path
+        git_output_file_name = template_name + '_' + SCRIPT_START_TIME + '.xml'
+
+        output_content = xml_file
+        if os.path.isfile(xml_file):
+            with open(xml_file, 'r') as fh:
+                output_content = fh.read()
+
+        msg = 'Output of {} update by {}'.format(template_name, user)
+        output_file_path = sparse_checkout_path + git_output_file_name
+        if vt_utils.git_update(file_path=output_file_path,action='create',content=output_content,commit_message=msg,
+                            branch='dev',project_id=generic_templates_project_id):
+            message = vt_utils.color_formatter(
+                        message = "\n\tTemplate Successfully updated to GIT 'dev' branch !!!\n",
+                        color = "YELLOW")
+            logger.info(message)
+            logger.info("\tPushing Updated files to Shell Servers...It may take few mins..")
+            #os.system('/homes/tsrinivas/public_html/toby/generic-templates/toby-deploy-generic-templates '
+            #          '--mode=upgrade  --branch=dev  --targets=alpha >> ' + GIT_SYNC_LOG_FILE )
+            os.system('/volume/labtools/bin/generic-templates-sync --branch dev')
+            message = vt_utils.color_formatter(
+                        message = "\tPushing Updated files to Shell Servers...Completed\n",
+                        color = "GREEN")
+            logger.info(message)
+    else:
+        message1 = vt_utils.color_formatter(
+                        message = "\n\tLocal Template created Successfully !!!\n",
+                        color = "GREEN")
+        local_path = re.search(r'(.*jnpr\/?)', _template_path).group(1)
+        message2 = vt_utils.color_formatter(
+                        message = "\n\tSet 'fv-verify-templates-location: {}' in params YAML "\
+                                       "for VE to pick from local path\n".format(local_path),
+                        color = "YELLOW")
+        logger.info(message1 + message2)
+
+def find_template_usage():
+    '''
+    print out usage information
+    '''
+    help_msg = '''
+
+    'find' option is used to find and fetch specific pre-populated templates from specified location.
+
+    Usage:
+
+        toby-ve  -t|--template find    [-s|--show_cmd <show command>]   [-l|--location  <dev|stage|production>]
+
+        Mandatory:
+          '-s or --show_cmd'   : The command for which the template is being searched.
+                                 Use '<>' angle brackets for values within show commands,
+                                 Example: show interfaces <ge-0/0/0>  detail
+          '-l or --location'   : Used to mention location name on which template search to happen
+                                 DEFAULT: production
+				 
+				 Locations are updated as below,
+
+				 'dev'	  - Immediate update (latest template updates are available here)
+				 'stage'  - Updated every 24 hours
+				 'production' - Updated every 2 weeks
+
+    Example:
+
+         toby-ve -t find -s "show chassis fpc" -l dev
+                          
+    '''
+#        Optional:
+#          '-a|--auto-detect-values' : Escapes values in the show command automatically.
+#                                      No need to mention values in '<>' angle brackets.
+#                                      May prompt user for some command outputs to verify automatically.
+
+    logger.info(help_msg)
+
+def find_template(args):
+    show_cmd = None
+    repo = None
+    template_path = None
+    #auto_esc_values = None
+
+    try:
+        #opts = getopt.getopt(args, 'hat:s:l:p:', ['help', 'auto-detect-values', 'template=', 'show_cmd=', 'template_path=', 'location='])[0]
+        opts = getopt.getopt(args, 'ht:s:l:p:', ['help', 'template=', 'show_cmd=', 'template_path=', 'location='])[0]
+    except getopt.GetoptError:
+        logger.info("*** wrong syntax ***")
+        find_template_usage()
+        #sys.exit(2)
+    for opt, arg in opts:
+        if opt in ('-s', '--show_cmd'):
+            show_cmd = arg
+        elif opt in ('-l', '--location'):
+            repo = arg
+        elif opt in ('-p', '--template_path'):
+            template_path = arg
+        #elif opt in ('-a', '--auto-detect-values'):
+        #    auto_esc_values = True
+        elif opt in ('-h', '--help'):
+            find_template_usage()
+            sys.exit()
+
+    default = False
+    if not repo:
+        repo = 'prod'
+        default = True
+    else:
+        repo = re.sub(r'production', 'prod', repo)
+
+    show_cmd = vt_utils.get_show_cmd_input(show_cmd) 
+    #show_cmd = vt_utils.get_show_cmd_interactively(show_cmd, auto_esc_values)
+    show_cmd, _dummy = vt_utils.get_show_cmd_interactively(show_cmd)
+
+    logger.info('\n\tFinding template for command : {} '.format(show_cmd))
+    input_show_cmd = show_cmd
+    show_cmd = vt_utils.strip_cmd_values(show_cmd)
+    logger.info('\n\tCommand after removing variable values :  {}  '.format(show_cmd))
+
+    module_name = show_cmd.split()[1]
+
+    if template_path:
+        _template_path = template_path     
+    else:
+        _template_path = os.path.join('/volume/regressions/toby/generic-templates/', repo, 'verify_templates/jnpr', module_name)
+    
+    #vt_utils.git_pull(git_dir=GENERIC_TEMPLATES_PATH_ALPHA, branch='alpha')  
+
+    # check if the template file exists first:
+    logger.info('\n\tLocation used for searching : {}'.format(re.sub(r'^prod$', 'production', repo)))
+    logger.debug('\n\tLooking for template directory {} ...'.format(_template_path))
+    if not os.path.exists(_template_path) or\
+       not get_template(show_cmd, input_show_cmd, _template_path, repo, default):
+        if not os.path.exists(_template_path):
+            message = vt_utils.color_formatter(
+                        message = "\n\t*** Template NOT FOUND at location '{}' ***\n".format(re.sub(r'^prod$', 'production', repo)),
+                        color = "RED")
+            logger.info(message)
+
+        if default:
+            ## Template not found in default location, looking at other locations 'stage' and 'dev'
+            for loc in ['stage', 'dev']:
+                repo = loc
+                logger.info("\n\tLooking at location '{}' ...".format(repo))
+                _template_path = os.path.join('/volume/regressions/toby/generic-templates/', repo, 'verify_templates/jnpr', module_name)
+                if os.path.exists(_template_path):
+                    if get_template(show_cmd, input_show_cmd, _template_path, repo, default):
+                        message = vt_utils.color_formatter(
+                                  message = "\tSet 'fv-verify-templates-location: {0}' in params YAML "\
+                                            "for VE to pick from '{0}' location\n".format(re.sub(r'^prod$', 'production', repo)),
+                                  color = "YELLOW")
+                        logger.info(message)
+                        break
+                else:
+                    message = vt_utils.color_formatter(
+                                  message = "\n\t*** Template NOT FOUND at location: {} ***\n".format(re.sub(r'^prod$', 'production', repo)),
+                                  color = "RED")
+                    logger.info(message)
+            else:
+                message = vt_utils.color_formatter(
+                            message = "\n\tThere is NO TEMPLATE FILE for the given show command : {}\n"\
+                                      "\tPlease generate one using update options!\n".format(input_show_cmd),
+                            color = "RED")
+                logger.info(message)
+                sys.exit()
+
+def get_template(show_cmd, input_show_cmd, _template_path, repo, default):
+    '''From the Template path found, get the actual template'''
+
+    # now read the template yaml file
+    # TODO: There might be an error here, redundant '_' statement.
+    find_template = 'j_check_' + '_'.join(show_cmd.split()[1:])
+    templates = vt_utils.get_existing_templates(_template_path)
+    #found = vt_utils.find_equivalant_template(find_template, templates)
+    #'''
+    found = None
+    if find_template in templates:
+        # found it
+        found = find_template
+        if default and repo != 'prod':
+            message = vt_utils.color_formatter(
+                        message = '\n\t*** FOUND TEMPLATE at location : {} ***'.format(repo),
+                        color = "GREEN")
+            logger.info(message)
+        message = vt_utils.color_formatter(
+                        message = '\n\t*** FOUND Template for the show command : {} '.format(input_show_cmd),
+                        color = "GREEN")
+        logger.info(message)
+        star_string = ''.join([ '+' for x in range(len(found))])
+        logger.info('\n\n\t+++++++++++++++++++++++' + star_string)
+        found_msg = vt_utils.color_formatter(
+                        message = found,
+                        color = "YELLOW")
+        logger.info('\n\t+   Template Name: {}   +'.format(found_msg))
+        logger.info('\n\t+++++++++++++++++++++++' + star_string)
+    else:
+        found = vt_utils.find_equivalent_template(find_template, templates)
+
+    #'''
+    if found:
+        # now print out all possible parameters:
+        message = vt_utils.color_formatter(
+                        message = '\n\n\t*** Template Content:\n',
+                        color = "SKYBLUE")
+        logger.info(message)
+        vt_utils.write_template_file({found: templates[found]})
+        logger.info('')
+        return True
+    else:
+        message = vt_utils.color_formatter(
+                        message = "\n\t*** Template NOT FOUND at location: {} ***".format(re.sub(r'^prod$', 'production', repo)),
+                        color = "RED")
+        logger.info(message + "\n")
+        return False
+
+def toby_ve_template_usage():
+    '''
+     Print out usage information
+    '''
+    help_msg = '''
+    toby-ve is a simple cli tool to do operations like find,update,...etc on Verify Generic Templates.
+    Using this tool user can update, create and find verify generic templates. 
+
+    Usage:
+
+        toby-ve  -t|--template [find|update_local|update_sync]  
+        
+        -t|--template		Invoke an operation like find or update of generic templates	[MANDATORY]
+
+        Options:
+
+       	    find  		=> Used to find the template name based on show command 
+            update_local 	=> Used to create/update the template using show command output
+            update_sync		=> Same as 'update_local' but it will also push template to GIT
+
+            Try  'toby-ve  -t <find|update_local|update_sync>  --help' to get further details
+    '''
+#        	regenerate 	=> Used to re-generate the template 
+#                                   Try  'toby-ve  -t regenerate  --help' to get the further details 
+    logger.info(help_msg)
+
+def make_seed_templates(args):
+
+    #args = sys.argv[1:]
+    #my_args = vt_utils.update_template_args(args)
+
+    #template_dir = '/homes/jpzhao/Toby/VE_Templates/templates_work/test_templates/'
+   # template_root_dir = 'generic_templates/juniper/'
+    xml_dir_root = "/homes/jpzhao/Toby/VE_Templates/templates_work/show_commands_completed/"
+
+    wxml = open('WRONG_XML.txt', 'w')
+    wxml.write('start: ' + str(time.time()) + '\n\n')
+    wxml.close()
+    wxml = open('WRONG_XML.txt', 'a')
+    os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True) 
+    for subdir in os.listdir(xml_dir_root):
+        xml_dir = xml_dir_root + subdir
+        logger.info('\n\n===== subdir:' + xml_dir)
+        xml_files = [ xml_file for xml_file in os.listdir(xml_dir) \
+                                if not re.search(r'\[', xml_file)]
+        for fxml in xml_files:
+            if not os.path.isfile('/'.join([xml_dir, fxml])):
+                logger.info('{}  is not a file under {}'.format(xml, xml_dir))
+                continue
+            xml_file = xml_dir + '/' + fxml
+            # find the show cmd, temp file, temp name
+            show_cmd_list = fxml[:-4].split('_') # remove '.txt'
+            show_cmd = ' '.join(show_cmd_list)
+            #template_file_name =  'j_check_' + '_'.join(show_cmd_list[1:]) + '.yaml'
+            #template_file_with_path = template_dir + template_file_name
+            #template_name = 'j_check_' + '_'.join(show_cmd_list[1:])
+            #- ------------------
+        
+            module_name = show_cmd.split()[1]
+        
+            _template_path = vt_utils.get_template_directory_name_from_show_cmd(TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH, show_cmd)
+
+            try:
+                os.stat(TEMP_GIT_GENERIC_TEMPLATES_PATH+'/verify_templates/jnpr/'+module_name+'/')
+                git_status = True
+            except:
+                git_status =  checkout_module_files_from_git(TEMP_GIT_GENERIC_TEMPLATES_PATH, module_name)
+                
+                
+            #my_args = vt_utils.update_template_args(args)
+            try: 
+                logger.info("XML File: " + xml_file)
+                template_name,_template_path,template_action,template_file_data = vt_utils.update_template(xml_file, show_cmd, _template_path)
+                logger.info("Template Name : " + template_name)
+                logger.info("Template Path : " + _template_path)
+            except Exception as err:
+                if re.match(r'NO_RPC', str(err)):
+                    wxml.write(xml_file + ': No_RPC_REPLY\n\n')
+                elif re.match(r'MANY_TOPS', str(err)):
+                    wxml.write(xml_file + ': MANY_TOPS\n\n')
+                else:
+                    # mmohan commented 
+                    #input('check error for {}: {}'.format(xml_file, str(err)))
+                    logger.info('check error for {}: {}'.format(xml_file, str(err)))
+                continue 
+        
+            content = yaml.dump(template_file_data, default_flow_style=False, indent=4)
+            user = getpass.getuser()
+            msg = 'VE template "{}" update by {}'.format(template_name, user)
+            file_path = 'verify_templates/jnpr' + '/' + module_name  +'/' + template_name + '.yaml'
+            if template_action == 'update':
+                vt_utils.git_update(file_path=file_path,action='update',content=content,commit_message=msg,branch='dev',
+                                    project_id=generic_templates_project_id)
+            else:
+                vt_utils.git_update(file_path=file_path,action='create',content=content,commit_message=msg,branch='dev',
+                                    project_id=generic_templates_project_id)
+    
+            os.makedirs(TEMP_GIT_COMMAND_OUTPUTS_PATH, exist_ok=True)
+            sparse_checkout_path = 'command_outputs/jnpr/'+module_name+'/'+template_name + '/'
+            TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL  = TEMP_GIT_COMMAND_OUTPUTS_PATH+sparse_checkout_path
+            logger.info("FULL PATH :" + TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL)
+            try:
+                os.stat(TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL)
+            except:
+                git_status =  checkout_output_files_from_git(TEMP_GIT_COMMAND_OUTPUTS_PATH, sparse_checkout_path)
+            git_output_file_name = template_name + '_' + SCRIPT_START_TIME + '.xml'
+            with open(xml_file, 'r') as fh:
+                output_content = fh.read()
+            msg = 'Output of {} update by {}'.format(template_name, user)
+            output_file_path = sparse_checkout_path + git_output_file_name
+            vt_utils.git_update(file_path=output_file_path,action='create',content=output_content,commit_message=msg,branch='dev',
+                                project_id=generic_templates_project_id)
+            logger.info("Template {} Updated Successfully !!!".format(template_name))
+
+    wxml.write('ends: ' + str(time.time()))
+    wxml.close()
+
+
+def regenerate_template_usage():
+    '''
+    print out usage information
+    '''
+    help_msg = '''
+
+    Regenerate Template tool is an offline tool that helps you to re-generate/re-create  generic VE templates.
+
+    Usage:
+
+      toby-ve  -t|--template regenerate   -n|--template_name  <template name>     [-l|--location   <dev|stage|production>]
+
+    Example:
+
+      toby-ve-alpha -t regenerate --location 'dev' -n j_check_chassis_fpc
+
+    '''
+    logger.info(help_msg)
+
+
+def regenerate_templates(args):
+
+    show_cmd = None
+    repo = None
+    template_path = None
+    template_name = None
+    try:
+        opts = getopt.getopt(args, 'ht:s:l:p:n:', ['help', 'template=', 'show_cmd=', 'template_path=', 'location=', 'template_name='])[0]
+    except getopt.GetoptError:
+        logger.info("*** wrong syntax ***")
+        regenerate_template_usage()
+
+    for opt, arg in opts:
+        if opt in ('-s', '--show_cmd'):
+            show_cmd = arg
+        elif opt in ('-l', '--location'):
+            repo = arg
+        elif opt in ('-p', '--template_path'):
+            template_path = arg
+        elif opt in ('-n', '--template_name'):
+            template_name = arg
+        elif opt in ('-h', '--help'):
+            regenerate_template_usage()
+            sys.exit()
+    
+    if template_name is None:
+        logger.info('\nERROR: \'-n | --template_name\' option is missing...')
+        regenerate_template_usage()
+        sys.exit()
+
+    if repo is None:
+        logger.info('\nERROR: \'-l | --location\' option is missing...')
+        regenerate_template_usage()
+        sys.exit()
+
+    template_name_list = template_name.split('_')
+    module_name = template_name_list[2]
+    logger.info('module name : ' + module_name)
+    show_cmd_list = ['show']
+    show_cmd_list.extend(template_name_list[2:])
+    show_cmd = ' '.join(show_cmd_list)
+    logger.info('show command : ' + show_cmd)
+    os.makedirs(TEMP_GIT_COMMAND_OUTPUTS_PATH, exist_ok=True)
+    sparse_checkout_path = 'command_outputs/jnpr/'+module_name+'/'+template_name + '/'
+    TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL  = TEMP_GIT_COMMAND_OUTPUTS_PATH+sparse_checkout_path
+    logger.info("FULL PATH :" + TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL)
+    try:
+        os.stat(TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL)
+    except:
+        git_status =  checkout_output_files_from_git(TEMP_GIT_COMMAND_OUTPUTS_PATH, sparse_checkout_path)
+
+
+    if template_path is None and repo == 'dev' :
+        _template_path = vt_utils.get_template_directory_name_from_show_cmd(TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH, show_cmd)
+        os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True)
+        git_status =  checkout_module_files_from_git(TEMP_GIT_GENERIC_TEMPLATES_PATH, module_name, branch = 'dev')
+    elif template_path is None and repo == 'stage' :
+        _template_path = vt_utils.get_template_directory_name_from_show_cmd(TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH, show_cmd)
+        os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True)
+        git_status =  checkout_module_files_from_git(TEMP_GIT_GENERIC_TEMPLATES_PATH, module_name, branch = 'stage')
+    elif template_path is None and repo == 'production' :
+        _template_path = vt_utils.get_template_directory_name_from_show_cmd(TEMP_GIT_GENERIC_TEMPLATES_JNPR_PATH, show_cmd)
+        os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True)
+        git_status =  checkout_module_files_from_git(TEMP_GIT_GENERIC_TEMPLATES_PATH, module_name, branch = 'master')
+    elif template_path is not None:
+        _template_path = template_path
+    else:
+        _template_path = GENERIC_TEMPLATES_PATH_ALPHA + show_cmd.split()[1] + '/'
+
+    template_file_name = TEMP_GIT_GENERIC_TEMPLATES_PATH + 'verify_templates/jnpr' + '/' + module_name  +'/' + template_name + '.yaml'
+    if os.path.exists(template_file_name):
+        os.remove(template_file_name)
+
+    #vt_utils.git_pull(git_dir=GENERIC_TEMPLATES_PATH_ALPHA, branch='alpha')
+
+    # check if the template file exists first:
+    logger.info('\n\tLocation used for searching {} ...'.format(repo))
+    logger.info('\n\tLooking for template directory {} ...'.format(_template_path))
+    if not os.path.exists(_template_path):
+        logger.info('\n\n\t*** Not Found : There is NO Template file for the show command : {} '.format(input_show_cmd))
+        sys.exit()
+
+    # now read the template yaml file
+    # TODO: There might be an error here, redundant '_' statement.
+    find_template = 'j_check_' + '_'.join(show_cmd.split()[1:])
+
+    xml_dir = TEMP_GIT_COMMAND_OUTPUTS_PATH_FULL
+
+    wxml = open('WRONG_XML.txt', 'w')
+    wxml.write('start: ' + str(time.time()) + '\n\n')
+    wxml.close()
+    wxml = open('WRONG_XML.txt', 'a')
+    os.makedirs(TEMP_GIT_GENERIC_TEMPLATES_PATH, exist_ok=True) 
+    xml_files = [ xml_file for xml_file in os.listdir(xml_dir) \
+                                if not re.search(r'\[', xml_file)]
+    for fxml in xml_files:
+        if not os.path.isfile('/'.join([xml_dir, fxml])):
+            logger.info('{}  is not a file under {}'.format(xml, xml_dir))
+            continue
+        xml_file = xml_dir + '/' + fxml
+        try: 
+            logger.info("XML File: " + xml_file)
+            template_name,_template_path,template_action,template_file_data = vt_utils.update_template(xml_file, show_cmd, _template_path)
+            logger.info("Template Name : " + template_name)
+            logger.info("Template Path : " + _template_path)
+        except Exception as err:
+            if re.match(r'NO_RPC', str(err)):
+                wxml.write(xml_file + ': No_RPC_REPLY\n\n')
+            elif re.match(r'MANY_TOPS', str(err)):
+                wxml.write(xml_file + ': MANY_TOPS\n\n')
+            else:
+                input('check error for {}: {}'.format(xml_file, str(err)))
+            continue 
+    
+    content = yaml.dump(template_file_data, default_flow_style=False, indent=4)
+    user = getpass.getuser()
+    msg = 'VE template "{}" update by {}'.format(template_name, user)
+    file_path = 'verify_templates/jnpr' + '/' + module_name  +'/' + template_name + '.yaml'
+    if git_status:
+        vt_utils.git_update(file_path=file_path,action='update',content=content,commit_message=msg,branch='dev',project_id=generic_templates_project_id)
+    else:
+        vt_utils.git_update(file_path=file_path,action='create',content=content,commit_message=msg,branch='dev',project_id=generic_templates_project_id)
+
+    logger.info("Template {} Updated Successfully !!!".format(template_name))
+    logger.info("Pushing updated files to alpha servers ...\n")
+    #os.system('/homes/tsrinivas/public_html/toby/generic-templates/toby-deploy-generic-templates --mode=upgrade  --branch=dev  --targets=alpha')
+    os.system('/volume/labtools/bin/generic-templates-sync --branch dev')
+
+    wxml.write('ends: ' + str(time.time()))
+    wxml.close()
+
+def checkout_module_files_from_git(template_path,module_name,branch='dev'):
+    return_value = True
+    os.chdir(template_path)
+    #os.system('pwd')
+    #os.system('git init')
+    gp = pexpect.spawn('git init')
+    gp.expect('Git repository.*')
+    os.system('git config core.sparseCheckout true')
+    os.system('echo \'verify_templates/jnpr/' + module_name + '\' > .git/info/sparse-checkout')
+    os.system('git remote add origin https://ssd-git.juniper.net/Juniper/generic-templates.git')
+    git_process = pexpect.spawn('git pull origin '+ branch)
+    git_process.expect('Username.*:')
+    git_process.sendline(git_user)
+    git_process.expect('Password.*:')
+    git_process.sendline(git_passwd)
+    pattern = re.escape(socket.gethostname())
+    git_process.expect(pexpect.EOF)
+    logger.debug(git_process.before)
+    if not os.path.isdir('verify_templates/jnpr'):
+        os.makedirs('verify_templates/jnpr', exist_ok=True)
+        return_value = False
+    logger.debug("sys path" + sys.path[0])
+    os.chdir(sys.path[0])
+    #os.system('pwd')
+    return  return_value
+
+
+def checkout_output_files_from_git(template_path,sparse_module,branch='dev'):
+
+    return_value = True
+    os.chdir(template_path)
+    #os.system('pwd')
+    #os.system('git init')
+    gp = pexpect.spawn('git init')
+    gp.expect('Git repository.*')
+    os.system('git config core.sparseCheckout true')
+    os.system('echo \''+ sparse_module +'\' > .git/info/sparse-checkout')
+    os.system('git remote add origin https://ssd-git.juniper.net/Juniper/generic-templates.git')
+    git_process = pexpect.spawn('git pull origin '+ branch)
+    git_process.expect('Username.*:')
+    git_process.sendline(git_user)
+    git_process.expect('Password.*:')
+    git_process.sendline(git_passwd)
+    pattern = re.escape(socket.gethostname())
+    git_process.expect(pexpect.EOF)
+    logger.debug(git_process.before)
+    if not os.path.isdir('command_outputs/jnpr'):
+        os.makedirs(sparse_module, exist_ok=True)
+        return_value = False
+    logger.debug("sys path" + sys.path[0])
+    os.chdir(sys.path[0])
+    #os.system('pwd')
+    return  return_value
+
+ 
+if __name__ == '__main__':
+
+    args = sys.argv[1:]
+
+    try:
+        opts = getopt.getopt(args, 'hat:s:x:p:l:n:y:d', ['help', 'auto-detect-values', 'template=', 'show_cmd=', 'xml_file=', 'template_path=', 'location=', 'template_name=', 'topo_yaml=', 'device='])[0]
+        if not opts:
+            logger.info("*** missing arguments ***")
+            toby_ve_template_usage()
+            sys.exit()
+    except getopt.GetoptError  as errMsg:
+        print(errMsg)
+        logger.info("*** wrong arguments ***")
+        toby_ve_template_usage()
+        sys.exit(2)
+
+#    for opt, arg in opts:
+#        if opt in ('-t', '--template'):
+#            template_action = str(arg).lower()
+
+    options = []
+    template_action = None
+    for opt, arg in opts:
+        options.append(opt) 
+        if opt in ('-t', '--template'):
+            template_action = str(arg).lower()
+
+    if template_action is not None:
+        if template_action in ('update_local', 'update_sync'):
+            update_template(args)
+            sys.exit()
+    
+        elif template_action == 'find':
+            find_template(args)
+            sys.exit()
+    
+        elif template_action == 'make':
+            start = time.time()
+            make_seed_templates(args)
+            duration = time.time() - start
+            logger.info("\n\n========Takes {} seconds".format(duration))
+            sys.exit()
+    
+        elif template_action == 'regenerate':
+            start = time.time()
+            regenerate_templates(args)
+            duration = time.time() - start
+            logger.info("\n\n========Takes {} seconds".format(duration))
+            sys.exit()
+        else:
+            logger.info("\n    Unsupported option : '{}'".format(template_action))
+            toby_ve_template_usage()
+            sys.exit()
+            
+    if '-h' in options or '--help' in options:
+            toby_ve_template_usage()
+            sys.exit()
+         
+

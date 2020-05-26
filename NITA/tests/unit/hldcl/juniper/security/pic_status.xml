@@ -1,0 +1,42 @@
+ <fpc-information>
+        <fpc>
+            <slot>0</slot>
+            <state>Online</state>
+            <description></description>
+            <pic>
+                <pic-slot>0</pic-slot>
+                <pic-state>Online</pic-state>
+                <pic-type>MS-MIC-16G</pic-type>
+            </pic>
+            <pic>
+                <pic-slot>2</pic-slot>
+                <pic-state>Online</pic-state>
+                <pic-type>10x 1GE(LAN) SFP</pic-type>
+            </pic>
+            <pic>
+                <pic-slot>3</pic-slot>
+                <pic-state>Online</pic-state>
+                <pic-type>10x 1GE(LAN) SFP</pic-type>
+            </pic>
+        </fpc>
+        <fpc>
+            <slot>1</slot>
+            <state>Online</state>
+            <description></description>
+            <pic>
+                <pic-slot>0</pic-slot>
+                <pic-state>Online</pic-state>
+                <pic-type>MS-MIC-16G</pic-type>
+            </pic>
+        </fpc>
+        <fpc>
+            <slot>2</slot>
+            <state>Online</state>
+            <description></description>
+            <pic>
+                <pic-slot>0</pic-slot>
+                <pic-state>Online</pic-state>
+                <pic-type>4x 10GE(LAN) SFP+</pic-type>
+            </pic>
+        </fpc>
+    </fpc-information>

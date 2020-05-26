@@ -1,0 +1,170 @@
+.\" Manpage for Event Engine
+.\" Contact rvenkata@juniper.net to correct errors or typos
+.TH man 1 "26 Sep 2019" "1.0" "Toby Event Engine"
+.SH NAME
+Toby Event Engine
+.SH SYNOPSIS
+Event Engine in Toby provides a standardized approach for triggering events or keywords.
+An event can be triggered via a simple cli command, such as 'clear bgp neighbor', or a complex set of actions
+.nf
+such as checking platform model and pic chip set, figuring out the laser command, and then log into a pfe, execute the laser command
+.SH DESCRIPTION
+This page documents the Event Engine information.The Toby Event Engine provides a standardized approach for triggering
+Events. Some of the features currently offered by this engine include:
+        -	Platform/hardware agnostic event triggers
+        -	arguments handling
+        -	iteration/duration handling
+        -	standard logging for easy debugging
+        -	extensions to add new events (user-defined)
+
+
+
+.SH Event Engine Usage
+
+Event Engine provides a generic, powerful keyword "Run Event" to execute any event trigger in Toby.  Here is an example:
+
+    ${res} =  Run Event   Flap Interface    device=r0    interface=r0r1
+                         method=ifd_laser_on_off
+                         Interval=0.3   iteration=100
+
+The 'Run Event'  keyword provides an intuitive and easy way to trigger a 'Flap Interface' event in Toby.
+.nf
+
+The Event Engine simplifies the event execution (what otherwise can be extensive coding) by performing the following actions automatically:
+.nf
+-	resolve 'r0' to the device handle of r0 ( optionally, you can pass a handle or name in directly)
+.nf
+-	find actual interface name for 'r0r1'  ( optionally, you can pass the name in)
+.nf
+-	find JUNOS version, platform model, pic type and determine which laser command to use
+-	find corresponding pfe name and slot
+-	 flap this interface with the appropriate laser command ( at shell or pfe) for 100 times (default is 1) at an interval
+     of 0.3 second ( default 5 seconds)
+-	Print logs to the console to indicate progresses of the event, so you can keep track of, for example, it is running
+    the 56th  iteration now..
+-	Check and confirm status of interface ( up/down) in each iteration (optional)
+
+This example demonstrates the simplification of a very complex event like 'flap interface' through the use of Event Engine.
+With 'Run Event' keyword, anyone can kick off a link flapping event  without the knowledge of how platform/hardware-specific
+low-level laser commands work. It eliminates the need for complex Robot logic or Python coding.
+
+Meanwhile, with the Event Engine, one can also easily 'register' any existing cli/shell/pfe/config command(s) as a trigger,
+and start an event with the trigger.  You can also use any Toby/Robot keyword as an event trigger
+
+
+.nf
+
+.PP
+.SH Event Engine Basic design
+The Event Engine provides 2 keywords: 'Run Event'  and 'Register Event'. Event Engine itself has no knowledge of any specific event.
+
+The built-in events that come with the Event Engine are defined in a separate YAML file 'BuiltIn_events.yaml', and is available
+within the Toby framework.
+When the first event action is encountered in a testsuite file, Event Engine will 'register' the
+events (read in the yaml file and turn them into executable events) - so there is no specific event engine initialization
+required for users to use the built-in events.
+
+.SH Event Engine Builtin Keywords
+Event Engine has a list of common events built-in, so that you can use them directly without any coding.
+'flap interface' is by far the most complicated event that automates all steps and made easy for users.
+There are also a few generic events such as 'on cli', 'on shell', 'on vty' that allows you to turn any JUNOS commands
+into an event without the need for any python or Robot coding.
+
+
+.PP
+.SH Registering an Event with 'Register Event ' keyword
+This keyword makes it very easy to expand the list of events way beyond the built-in events.
+In addition to already generic on_cli/on_shell/on_vty events, you can add complex event via a Robot keyword or a python
+method, or even a combination of existing events.
+
+    Register Event  <Event_Name>   [trigger_method=a.b.c.func1]  [trigger_args==@args]
+.nf
+                   [check_method=x.y.z.func2]    [cs=@cargs]
+
+
+
+.SH Build your own events(ROBOT) via 'Register Event' Keyword
+
+You can build up your own events and 'register' them via the 'Register Event' keyword.  Since Event Engine handles the
+common tasks such as resolving device hande/name, handling iteration/duration,  your triggers are simplified by
+providing justa  list of actions.  Let's look at how it's done with examples
+
+Add a new event with a Robot keyword
+Register Event  <Event_Name>   [trigger_method=ROBOT:keyword1]  [trigger_args==@args]
+.nf
+               [check_method=x.y.z.func2]    [check_args=@cargs]
+
+
+Robot file contents:
+
+*** Keyword ***
+ISIS To OSPF
+    [Arguments]     ${intf}
+    config_engine	  device_list=r0    cmd_list=set protocols isis interface ${intf}
+    run event    ON CONFIG  command_list=delete protocols isis, set protocols ospf area 0 interface all,commit     device=r0
+
+*** Test Cases ***
+TESTCASE 10 use Robot keyword as an event
+    @{targs}   Create List  intf=all
+Register Event   swap_igp    trigger_method=ROBOT:ISIS To OSPF  trigger_args=@{targs}
+
+    Run Event   swap_igp   iteration=5  interval=10 # intf takes default 'all' value
+
+    Run Event   swap_igp    intf=${tv['r0__r0r1__pic']}    # intf is specified
+
+In this example, we created a Robot keyword 'Switch IGP', in which, isis is set first, with the config engine, and then,
+the config is deleted, and ospf config is added via the 'On Config' event.  This new Robot keyword is then 'registered'
+to event engine, with the arg 'intf', as required by the keyword.
+
+Once registered, you can un the event sam way as other events.
+
+.SH Build your own events(python) via 'Register Event' Keyword
+
+In case you want to use a python method, you can also register it as an event
+
+Register Event  <Event_Name>   [trigger_method=a.b.c.func1]  [trigger_args==@args]
+.nf
+               [check_method=x.y.z.func2]    [check_args=@cargs]
+
+.SH Add checking in the event
+
+TESTCASE 14 - Use  CLI commands as event
+
+    @{cargs}   Create List  checks=j_check_chassis_fpc:parameters:state  devices=r0  value=Online  cmd=show chassis fpc 0
+Register Event   On CLI  check_method=ROBOT:Verify    check_args=${cargs}
+
+${res} =  Run Event	  ON CLI     command=request chassis fpc slot 0 offline, request chassis fpc slot 0 online
+                                           device=r0     enable_check=1   interation=30   check_interval=10   timeout=60
+
+Should be True  '${res}' == 'True'
+
+This example tries to add checking into the event "ON CLI".  The event turns fpc 0 off and on, the checking added is to
+make sure the fpc is back online at each iteration.
+
+Verification engine is used here with  generic templates  in this case . The generic templtes provide a convienent way to
+check for any show command without the hassle of going through the XPath or regex.  You can use any other checking method
+if it fits your need.
+
+The 'check_method' uses 'ROBOT:verify', with arguments that uses the VE generic templates. The checking will be executed
+by the event engine as :
+
+Verify   checks=j_check_chassis_fpc:parameters:state  devices=r0  value=Online  cmd=show chassis fpc 0
+
+When the event is triggered using the 'Run Event' keyword,  there are three checking related args in the call:
+"enable_check=1":       this tells event engine to execute the checking using the registered VE check method ( default is False/0 )
+"timeout=60":   the check method is called in a polling mechanism, until the timeout if no pass. (default is 30 seconds.  )
+"check_interval=10":   interval between the checking until pass.  (default is 1 second.)
+
+The event will return False if the checking failed after timeout.
+
+
+
+
+
+.SH RESULTS
+After you have registered the events, you can use them the same way as you do with the Buit-in events with the
+'Run Event' keyword.
+
+
+.SH AUTHOR
+Rajesh Kumar Thathapuram Venkata (rvenkata@juniper.net)

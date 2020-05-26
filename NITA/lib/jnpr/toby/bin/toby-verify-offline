@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+# coding=utf-8
+"""
+    Copyright (C) 2003-2015, Juniper Networks, Inc.
+    All rights reserved.
+    Author:
+        VE Team
+    Description:
+        Offline verification engine tool.
+    Usage:
+        toby-verify-offline -t toby.params.yaml -v verify.yaml 
+ """
+
+import sys
+import getopt
+import builtins
+import pprint
+from jnpr.toby.init.init import init
+from jnpr.toby.engines.verification.verifyEngine import verifyEngine
+import  jnpr.toby.engines.config.config_utils as config_utils
+
+
+builtins.t = init()
+
+def usage():
+    '''
+    print out usage information
+    '''
+    help_msg = '''
+    toby-verify-offline is an offline verification engine tool. it allows you to
+    verify/get your verification using the verification engine without connecting
+    to the devices. This saves time and resource while you are experimenting and
+    verifying with saved xml/text output.
+
+    This tool will perform all of the below mentioned operations in offline mode:
+        - check the verification file syntax in yaml format.
+        - findout if tvars is available in params.
+        - checks if the scaling syntax, tagging is written correctly.
+        - print out the final result from verify or get keyword.
+        - print out complete t_vars avaiable to use in verification engine.
+
+    Usage:
+       toby-verify-offline **kwargs
+       '--topo or -t'	   	: The topology file. [MANDATORY]
+       '--showdump' 	   	: Device response file in the format xml/text.[MANDATORY]
+       '--file or -v'  		: The verification yaml file. [MANDATORY]
+       '--checks or --info'   	: Testcases separated by comma defined in the verification file. [MANDATORY] 
+       '--devices'   	   	: Devices separated by comma to execute on. [MANDATORY]
+       '--type'      	   	: Type get/verify for getting the value or verify it respectively. [OPTIONAL, DEFAULT = 'verify']
+       '--args'      	   	: Arguments for the verification. [OPTIONAL]
+       '--value'     	   	: Value to the particular verification. [OPTIONAL]
+       '--dict'      	   	: Addtional dict to merge at the same level. [OPTIONAL]
+       '--operator'        	: Operator to the particular verification. [OPTIONAL]
+       '--help or -h'           : For help in VE offline tool. 
+
+    '''
+    print(help_msg)
+
+def main():
+    '''
+    check verify yaml file offline
+    '''
+    try:
+        print("before opt")
+        opts,args = getopt.getopt(sys.argv[1:], 'ht:v:', ['showdump=','checks=', 'topo=', 'file=','help','verify=','info=','devices=','type=','args=','value=','dict=','operator='])
+        print("after opt")
+        if not opts:
+            print("*** missing arguments ***")
+            usage()
+            sys.exit()
+    except getopt.GetoptError:
+        print("*** wrong syntax ***")
+        usage()
+        sys.exit(2)
+    data_dict={}
+    VE_type = 'verify'
+    #data_dict.update({'is_VE_offline':True})
+    print ( "opts = ["+repr (opts)+"] " )
+    print_tvars = tdata = None
+    for opt, args in opts:
+        if opt in ('-t', '--topo'):
+            t_file = args
+            tdata = config_utils.read_yaml(file=t_file)
+            data_dict.update({'t_handle':tdata['t']['resources']})
+        elif opt in ('--showdump'):
+            file_data = args
+            with open(file_data, 'r') as content_file:
+                response = content_file.read()
+            data_dict.update({'offline_data':response})
+        elif opt in ('--file', '-v'):
+            file = args
+            data_dict.update({'file':args})
+        elif opt in ('--checks'):
+            data_dict.update({'checks':args})
+        elif opt in ('--info'):
+            data_dict.update({'info':args})
+        elif opt in ('--devices'):
+            data_dict.update({'devices':args})
+        elif opt in ('--type'):
+            VE_type = args
+            #data_dict.update({'type':args})
+        elif opt in ('--args'):
+            data_dict.update({'args':args})
+        elif opt in ('--value'):
+            data_dict.update({'value':args})
+        elif opt in ('--dict'):
+            data_dict.update({'dict':args})
+        elif opt in ('--operator'):
+            data_dict.update({'operator':args})
+        elif opt in ('-h', '-help'):
+            usage()
+            sys.exit()
+    verify = verifyEngine(offline=True)
+    if VE_type.lower() == 'verify' :
+        verify.verify_specific_checks_api(**data_dict)
+    elif VE_type.lower() == 'get':
+        extracted_data = verify.get_specific_data(**data_dict)
+        print("\n\nExtracted data is :")
+        print(extracted_data)
+        print("\n\n")
+    else :
+        print("Please Provide the valid type [verify/get]")
+
+if __name__ == '__main__':
+    main()

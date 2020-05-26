@@ -1,0 +1,524 @@
+#!/usr/bin/env python3
+"""toby wrapper
+
+The toby wrapper provides additional functionality on top of robot.  By
+employing a wrapper it is possible to set the appropriate outputdir for
+robot and inject any analytics tools as needed.
+
+Example:
+        $ toby -p pineda.yaml test.robot
+
+Attributes:
+    (all existing robot parameters)
+
+
+"""
+
+from __future__ import print_function
+import os
+import socket
+import sys
+import time
+import datetime
+import yaml
+import re
+import pwd
+import platform
+import jnpr.toby as toby
+from robot import run_cli
+from robot.api import TestData
+from shutil import copyfile
+from jnpr.toby.docs.doc_reader import reader as doc_reader
+import psutil
+
+def main(): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    '''
+    Main body of toby execution wrapper
+    '''
+
+    robot_file = None
+    params_files = None
+    client_os = platform.system()
+    toby_install_path = os.path.dirname(toby.__file__)
+    environment_file = toby_install_path + '/frameworkDefaults/environment.yaml'
+    os_check = False
+    os.umask(0o022)
+
+    for line in ['Windows', 'Linux', 'Darwin']:
+        if str(client_os) == str(line):
+            os_check = True
+
+    if os_check is False:
+        print('Unsupported platform: ' + client_os)
+        exit()
+
+    del sys.argv[0]
+    args = sys.argv
+    junos_release_tags_exclude = []
+    print("Toby Version       : " + toby.__version__)
+    print("Installation Date  : " + toby.__installation_date__ + "\n")
+
+    if re.search(r'\-dev', toby.__version__):
+        print("########################################")
+        print("    WARNING     WARNING     WARNING     ")
+        print("   You are running on Toby alpha code   ")
+        print("########################################\n")
+
+    cpu_percent = psutil.cpu_percent()
+    memory_percent = psutil.virtual_memory()[2]
+    if  cpu_percent > 90 or memory_percent > 90 :
+        print("WARNING" ,"CPU Utilization or Memory Utilization is more than threshold value of 90%, you may want to switch to other server") 
+
+
+
+    if len(args) == 0: # pylint: disable=len-as-condition
+        check_setup(environment_file)
+        print("Please call toby --help\n")
+        exit(0)
+
+    robot_file = None
+    if re.search(r'\.robot$', args[-1]):
+        robot_file = args[-1]
+
+    #### Intercept command line parameters and alter as needed ####
+    outputdir = None
+    for i in range(0, len(args)): # pylint: disable=consider-using-enumerate
+        if i > len(args)-1:
+            break
+        if args[i] != '--setup':
+            check_setup(environment_file)
+
+        if args[i] == '--version':
+            run_cli(['--version'])
+            exit(0)
+        elif args[i] == '--setup':
+            try:
+                input_environment_file = args[i+1]
+                copyfile(input_environment_file, environment_file)
+                print("\nToby setup is done!!! You are all set to use Toby\n")
+            except IndexError:
+                env_dict = dict()
+                for attr in ['spirent', 'avalanche', 'ixia', 'breakingpoint', 'elevate', 'selenium']:
+                    if input('Do you intend to use ' + attr + ' ? (y/n) : ') == 'y':
+                        env_dict[attr + '-lib-path'] = input('Specify ' + attr + '-lib-path :')
+                        if attr == 'avalanche':
+                            env_dict[attr + '-tcl-bin'] = input('Specify ' + attr + '-tcl-bin :')
+                            env_dict[attr + '-threats'] = input('Specify ' + attr + '-threats :')
+                        elif attr == 'spirent':
+                            if input('Do you intend to use 32bit STC bin' + attr + ' ? (y/n) : ') == 'y':
+                                env_dict[attr + '-tcl-bin'] = input('Specify ' + attr + '-tcl-bin :')
+                            if input('Do you intend to use 64bit STC bin' + attr + ' ? (y/n) : ') == 'y':
+                                env_dict[attr + '-tcl-bin64'] = input('Specify ' + attr + '-tcl-bin64 :')
+
+                try:
+                    with open(environment_file, 'w') as env_yaml:
+                        for env_key in env_dict:
+                            env_yaml.write(env_key + ": '" + env_dict[env_key] + "'\n")
+                        env_yaml.close()
+                        print("\nToby setup is done!!! You are all set to use Toby\n")
+                except Exception as error:
+                    raise Exception("Unable to write environment file for Toby: " + error)
+            exit(0)
+        elif args[i] == '-d':
+            outputdir = args[i+1]
+        elif re.match(r"^--outputdir", args[i]):
+            args[i] = re.sub(r"^--", "--", args[i])
+            outputdir = args[i+1]
+        elif args[i] == '--console_log':
+            args.insert(i, 'console_log:enable')
+            args.insert(i, '--variable')
+            args.pop(i+2)
+        elif args[i] == '--params' or args[i] == '-p' or args[i] == '-V':
+            params_files = args[i+1]
+            params_variable = "config:" + params_files
+            args.pop(i)
+            args.pop(i)
+            args.insert(i, params_variable)
+            args.insert(i, '--variable')
+        elif args[i] == '--pause':
+            params = "pause_file:" + args[i+1]
+            args.pop(i)
+            args.pop(i)
+            args.insert(i, 'jnpr.toby.tools.listeners.pause')
+            args.insert(i, '--listener')
+            args.insert(i, params)
+            args.insert(i, '--variable')
+        elif args[i] == '--pause_on_failure':
+            args.insert(i, 'jnpr.toby.tools.listeners.pause_on_fail')
+            args.insert(i, '--listener')
+            args.pop(i+2)
+        elif args[i] == '--mail':
+            args.insert(i, 'mail:enable')
+            args.insert(i, '--variable')
+            args.pop(i+2)
+        elif (args[i] == '--include' or args[i] == '-i') and args[i+1].startswith('junos_release'):
+            junos_release = re.sub(r'^(\w+):', '', args[i+1])
+            args.pop(i)
+            args.pop(i)
+            #next two lines; add something insert to avoid breaking the processing of arguments
+            args.insert(i, 'foo123foo123')
+            args.insert(i, '--exclude')
+            junos_release_tags_exclude = _check_junos_release_match(robot_file, junos_release)
+        elif args[i] == '--help' or args[i] == '-?' or args[i] == '-h':
+            print_help()
+        elif args[i] == '--man':
+            target = []
+            for j in range(i+1, len(args)):
+                target.append(args[j])
+            doc_reader('_'.join(target))
+            sys.exit()
+
+    for tag in junos_release_tags_exclude:
+        args.insert(0, tag)
+        args.insert(0, '--exclude')
+
+    date_time = datetime.datetime.now()
+    session_id = str(date_time.year) \
+                 + '{:02.0f}'.format(date_time.month) \
+                 + '{:02.0f}'.format(date_time.day) \
+                 + '-' \
+                 + '{:02.0f}'.format(date_time.hour) \
+                 + '{:02.0f}'.format(date_time.minute) \
+                 + '{:02.0f}'.format(date_time.second)
+
+    suite = None
+    script_prefix = "toby"
+    #robot file provided so extending session_id str
+    if robot_file:
+        #remove path
+        path_list = robot_file.split('/')
+        robot_file_no_path = path_list[-1]
+        #remove robot extention
+        script_prefix = re.sub(r"\..*$", "", robot_file_no_path)
+        #add script prefix to existing session id
+        session_id = script_prefix + "_" + session_id
+
+        #collect Suite if single robot file
+        suite = TestData(source=robot_file)
+
+    #create default output folder if NOT specified by user via outputdir
+    if not outputdir:
+        outputdir = "toby_logs/" + session_id
+        os.makedirs(outputdir)
+        user = None
+        if client_os == 'Windows':
+            user = os.environ['USERNAME']
+        else:
+            user = os.environ['USER']
+
+        if os.path.isdir("/homes/" + user + "/public_html"):
+            if not os.path.isdir("/homes/" + user + "/public_html/toby_logs"):
+                os.mkdir("/homes/" + user + "/public_html/toby_logs")
+            os.system("ln -s " + os.getcwd() + '/' + outputdir + " /homes/" + user + "/public_html/toby_logs")
+
+
+        if client_os in ['Linux', 'Darwin']:
+            try:
+                os.unlink('latest_toby_logs')
+            except (OSError, FileNotFoundError):
+                pass
+
+            ln_cmd = 'ln -s ' + outputdir + ' latest_toby_logs'
+            os.system(ln_cmd)
+    output_xml_file = outputdir + '/' + script_prefix + '_output.xml'
+
+    # Include / Exclude testcases
+    if params_files:
+        list_params_files = params_files.split(":")
+        try:
+            for pfile in list_params_files:
+                if not pfile.lower().endswith((".yaml",".yml")):
+                    raise Exception('Not a Yaml file! Params filename must be of type *.yml or *.yaml' + pfile)
+        except Exception:
+            print("\n*********************************************")
+            print(
+                "\nInvalid File format %s  supplied for params options. Please check 'toby  --help ' for params options and file extension supported.\n" % pfile)
+            print("*********************************************\n")
+            exit(0)
+        init_data = yaml.safe_load(open(list_params_files[0]))
+        t_data = init_data['t']
+        if 'framework_variables' in t_data and isinstance(t_data['framework_variables'], dict):
+            for global_fv in t_data['framework_variables']:
+                if global_fv == 'fv-include-tag':
+                    list_of_tags = t_data['framework_variables']['fv-include-tag'].split(":")
+                    for tag in list_of_tags:
+                        args.insert(-1, "-i")
+                        args.insert(-1, str(tag))
+
+                elif global_fv == 'fv-exclude-tag':
+                    list_of_tags = t_data['framework_variables']['fv-exclude-tag'].split(":")
+                    for tag in list_of_tags:
+                        args.insert(-1, "-e")
+                        args.insert(-1, str(tag))
+
+    build_profile_and_exec_info(session_id, params_files, output_xml_file, outputdir, args, suite)
+
+    if re.search(r'\.robot$', args[-1]):
+        robot_arguments = ['--exclude', 'SKIP', '--outputdir', outputdir, '-o', script_prefix + '_output.xml',
+                           '-r', script_prefix + '_report.html', '-l', script_prefix + '_log.html',
+                           '--listener', 'jnpr.toby.engines.macro.macro_listener',
+                           '--listener', 'jnpr.toby.tools.listeners.lib_version',
+                           '--variable', 'session_id:' + session_id] + args[:]
+    else:
+        robot_arguments = ['--exclude', 'SKIP', '--outputdir', outputdir,
+                           '--listener', 'jnpr.toby.engines.macro.macro_listener',
+                           '--listener', 'jnpr.toby.tools.listeners.lib_version',
+                           '--variable', 'session_id:' + session_id] + args[:]
+    #print("\n\nROBOT CALL: " + str(robot_arguments) + "\n\n")
+    try:
+        run_cli(robot_arguments[:])
+    except SystemExit:
+        pass
+
+    #print additional log links
+    user = ''
+    if client_os == 'Windows':
+        user = os.environ.get('USERNAME', '')
+    else:
+        user = pwd.getpwuid(os.getuid()).pw_name
+    print("\n")
+
+    toby_log_folder = re.sub(r"^.*toby_logs", "toby_logs", outputdir)
+    log_html = toby_log_folder + "/" + script_prefix + "_log.html"
+    report_html = toby_log_folder + "/" + script_prefix + "_report.html"
+    output_xml = toby_log_folder + "/" + script_prefix + "_output.xml"
+
+    #copy toby logo file into logdir
+    if robot_file:
+        try:
+            #having a toby logo in the result is not a critical operation, so conducting it in a try/except
+            copyfile(toby_install_path + '/bin/toby_logo.png', toby_log_folder + '/toby_logo.png')
+            js_function = '''function addTobyLogo(main) {
+    $('body').append($('</br></br><div align="left">&nbsp;<img src="toby_logo.png" width=120 height=53>&nbsp;&nbsp;&nbsp;<small><i>(developed and used by Juniper Test Engineering using the Robot Test Framework)</i></small></div>'));
+}
+'''
+            with open(log_html) as read_file:
+                html_data = read_file.read()
+                html_data = html_data.replace('</script>', js_function + '</script>', 1)
+                #html_data = html_data.replace('addTestExecutionLog(topsuite);','addTobyLogo(topsuite);')
+                html_data = html_data.replace('addStatistics();', 'addTobyLogo(topsuite);\naddStatistics();')
+            read_file.close()
+            write_file = open(log_html, 'w')
+            write_file.write(html_data)
+            write_file.close()
+        except Exception as error:
+            print("Couldn't update " + log_html + " with Toby logo: " + str(error))
+
+    if os.path.isdir('/homes/' + user + '/public_html') and robot_file :
+        #get the fqdn and use it as web_prefix assuming HTTP server is configured for public_html directory.
+        web_prefix = None
+        hostname = socket.getfqdn()
+        web_prefix = 'http://' + hostname + '/~' + user + '/'
+        if web_prefix:
+            print('Log Link:      ' + web_prefix + log_html + " ")
+            print('Report Link:   ' + web_prefix + report_html + " ")
+            print('XML Log Link:  ' + web_prefix + output_xml + " ")
+            print('Topology Link: ' + web_prefix + toby_log_folder + "/topology.png")
+
+    print("Textual Log:   ./" + outputdir + "/" + script_prefix + ".log")
+    if client_os in ['Linux', 'Darwin']:
+        print("Latest Logs:   ./latest_toby_logs")
+
+    print("\n")
+    print("Execution completed at " + str(datetime.datetime.now()) + " on " + socket.gethostname() + " by user " + user + "\n\n")
+
+def print_help():
+    '''
+    Print Help Screen & then exit
+    '''
+    from robot.run import USAGE as robot_usage # pylint: disable=redefined-outer-name
+    toby_help = '    --man topics|*        (Native Toby) Provide list of man page topics, or provide help for particular topic.\n' + \
+                '    -p|--params           (Native Toby) Takes YAML Input file with extenstion (.yml or .yaml). One or colon separated multiple input files.\n' + \
+                '                          Examples: --params script.params.yaml\n' + \
+                '                                    --params script.params.yaml:issu.yaml\n' + \
+                '    --console_log         (Native Toby) Writes log entries to console.  All Log\n' + \
+                '                          Robot keyword calls and all t.log() Python calls that would\n' + \
+                '                          typically be written to logs will now also be printed to the\n' + \
+                '                          screen (STDOUT)\n' + \
+                '    --pause               (Native Toby) Takes YAML Input file. Will pause execution if condition is met.\n' + \
+                '                          It can pause before, after, and on fail testcases and keywords based on input present in yaml file.\n' + \
+                '                          Examples: --pause pause_file.yaml\n' + \
+                '    --pause_on_failure    (Native Toby) Pauses and launches Python Debugger\n' + \
+                '                          when a failure occurs allowing for further troubleshooting.\n' + \
+                '                          When paused, type \'c\' and press enter to have the test suite proceed.\n' + \
+                '    --mail                (Native Toby) Sends mail detailing failure(s) to current user if a pause on failure occurs.\n'
+
+    robot_help = re.sub(r"Robot Framework -- A generic test automation framework\n\n", "", robot_usage)
+    robot_help = re.sub(r"Version:  <VERSION>\n\n", "", robot_help)
+    robot_help = re.sub(r"   or:.+\n", "", robot_help)
+    robot_help = re.sub(r"Usage:  robot", "\nUsage: toby", robot_help)
+    robot_help = re.sub(r"Robot Framework is a Python", "Toby Framework relies on the underlying Robot Framework.\n" + \
+                        "Most documentation below is 'Robot' documentation but all parameters below are \n" + \
+                        "also available in Toby. Note that some changes were made below to add Toby specific parameters \n" + \
+                        "(indicated by `Native Toby`) and the Examples section was updated to reflect Toby examples\n" + \
+                        "vs. native Robot examples.\n\n" + \
+                        "Robot Framework is a Python", robot_help)
+    robot_help = re.sub(r"Options\n=======\n\n", "Options\n=======\n\n" + toby_help, robot_help)
+    robot_help = re.sub(r"\$ robot", "$ toby", robot_help)
+    robot_help = re.sub(r"\# Executing `robot`.*\n", "", robot_help)
+    robot_help = re.sub(r"\$ python.*\n\n", "", robot_help)
+    robot_help = re.sub(r"\# Running `robot`.*\n", "", robot_help)
+    robot_help = re.sub(r"\$ jython.*\n\n", "", robot_help)
+    print(robot_help)
+    sys.exit()
+
+def check_setup(environment_file):
+    """
+    check to see if toby has been set up yet (toby --setup)
+    """
+    if not os.path.isfile(environment_file):
+        print("\n*********************************************")
+        print("\nToby's post Installation Setup is not complete. Please run 'toby  --setup' to do the required configuration.\n")
+        print("*********************************************\n")
+        exit(1)
+
+def build_profile_and_exec_info(session_id=None, params_files=None, output_xml_file=None, output_dir=None, args=None, suite=None):
+    """
+    create toby_profile.yaml to rerun test and toby_exec.yaml file in logdir for metrics
+    """
+
+    import xml.etree.ElementTree as ET
+
+    profile = {}
+    exec_info = {}
+
+    #build profile
+    profile['robot_file'] = args[-1]
+    if params_files:
+        profile['params_files'] = params_files.split(':')
+    if suite:
+        profile['suite'] = suite.name
+    profile['test_cases_run'] = []
+    try:
+        tree = ET.parse(output_xml_file)
+        root = tree.getroot()
+        for test in root.iter('test'):
+            profile['test_cases_run'].append(test.attrib['name'])
+    except Exception:
+        profile['tests'] = []
+
+    #build exec_info
+    exec_info['robot_file'] = profile['robot_file']
+    if params_files:
+        exec_info['params_files'] = profile['params_files']
+    if suite:
+        exec_info['suite'] = profile['suite']
+    exec_info['epoch'] = time.time()
+    exec_info['session_id'] = session_id
+    exec_info['arguments_all'] = args
+    testcases = []
+    if suite:
+        for test in suite.testcase_table:
+            testcases.append(test.name)
+    exec_info['test_cases_all'] = testcases
+    exec_info['test_cases_run'] = profile['test_cases_run']
+    with open(output_dir + '/toby_exec.yaml', 'w') as yaml_file:
+        yaml_file.write('# Toby runtime information\n')
+        yaml_file.write('# (Note that params|-p arguments get converted to --variable config:<params> style arguments)\n')
+        yaml.dump(exec_info, yaml_file, default_flow_style=False)
+    yaml_file.close()
+
+def _junos_release_break_down(release):
+    '''
+    Function to break down the release into branch parts
+    '''
+    release = re.sub(r'\D+$','', release)
+
+    rel_dict = {}
+    branch_lst = []
+    release = re.sub(r'-', '', release)
+    match = re.match(r'^(\d+\.\d+)', release)
+    if match:
+        rel_dict['major_minor'] = match.group(1)
+        branch_lst.append('major_minor')
+    else:
+        raise Exception('Malformated release filter ' + release)
+
+    #remove major and minor release from release string
+    release = re.sub(r'^\d+\.\d+', '', release)
+
+    while release != '':
+        match = re.match(r'^(\D+)(\d+)', release)
+        if not match.group(2):
+            raise Exception('Malformated release filter ' + release)
+        rel_dict[match.group(1).lower()] = float(match.group(2))
+        branch_lst.append(match.group(1).lower())
+        release = re.sub(r'^(\D+)(\d+)', '', release)
+    return branch_lst, rel_dict
+
+def _check_junos_release_match(robot_file, image_release): #pylint: disable=too-many-locals
+    '''
+    Function to verify compatibility between testcase and JUNOS release
+    '''
+
+    #image_branch_lst not needed for next assigment
+    image_branch_lst, image_release_dict = _junos_release_break_down(image_release) #pylint: disable=unused-variable
+    print('Image Release: ' + image_release + "\n")
+
+    junos_release_tags_exclude = []
+    suite = TestData(source=robot_file)
+    #early filtering
+    test_case_junos_releases = {}
+    junos_release_tags = {}
+
+    for test in suite.testcase_table:
+        if type(test.tags.value) is list: #pylint: disable=unidiomatic-typecheck
+            for tag in test.tags.value:
+                if tag.lower().startswith('junos_release:'):
+                    junos_release_tags[test.name] = tag
+                    junos_releases = re.sub(r'^(\w+):', '', tag)
+                    test_case_junos_releases[test.name] = junos_releases
+
+    for test in test_case_junos_releases: #pylint: disable=too-many-nested-blocks
+        release_str = test_case_junos_releases[test]
+        release_lst = release_str.split(',')
+
+        include_exclude = {}
+
+        status = 'INCLUDE'
+        if len(release_lst) > 0: #pylint: disable=len-as-condition
+            status = 'EXCLUDE'
+
+        tmp_release_lst = []
+        for release in release_lst:
+            #default is greater-than, but also support less-than a given release
+            if release.startswith('<'):
+                release = re.sub(r'^<', '', release)
+                include_exclude[release] = 'EXCLUDE'
+            else:
+                include_exclude[release] = 'INCLUDE'
+            tmp_release_lst.append(release)
+        release_lst = tmp_release_lst
+        release_lst.sort()
+
+        print("Checking release_lst :" + release_str)
+
+        # step through ordered list of possible relevant releases.  ex: [17.2r3, 17.3r2-s1, 19.1]
+        relevant = False
+        for release in release_lst:
+            #Break down release into smaller parts
+            branch_lst, release_dict = _junos_release_break_down(release=release)
+            for branch in branch_lst: # ex: major_minor,r,s,x
+                #Processing branch
+                if branch in image_release_dict: # ex: if r is in the image_release_dict
+                    #if the image release is less than the matching image release branch, then we keep going
+                    if release_dict[branch] < image_release_dict[branch]:
+                        relevant = True
+                        if branch_lst[-1] != branch: #additional branch suffixes, so not relevant. move on
+                            relevant = False
+                            break
+                    elif release_dict[branch] == image_release_dict[branch]:
+                        relevant = True
+                    else: #if not, then we can go ahead and break
+                        relevant = False
+                        break
+                else:
+                    break
+            if relevant:
+                status = include_exclude[release]
+        if status == 'EXCLUDE':
+            junos_release_tags_exclude.append(junos_release_tags[test])
+    return junos_release_tags_exclude
+
+if __name__ == '__main__':
+    main()

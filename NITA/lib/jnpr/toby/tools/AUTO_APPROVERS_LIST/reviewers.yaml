@@ -1,0 +1,13 @@
+# ---
+# Approvers List for Libraries
+# ---
+
+lib/jnpr/toby/services/:
+   reviewers:
+      -  mx-services-apis-dev
+   num_reviewers: 2
+
+lib/jnpr/toby/trafficgen/ligen/:
+   reviewers:
+      - ligen-dev 
+   num_reviewers: 2

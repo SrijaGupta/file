@@ -1,0 +1,37 @@
+<ike-security-associations-information>
+        <ike-security-associations-block>
+            <ike-sa-remote-address>10.0.1.2</ike-sa-remote-address>
+            <ike-security-associations>
+                <ike-sa-role>initiator</ike-sa-role>
+                <ike-sa-state>matured</ike-sa-state>
+                <ike-sa-initiator-cookie>16ac5f588b934e91</ike-sa-initiator-cookie>
+                <ike-sa-responder-cookie>5fccb149f6fd6c4e</ike-sa-responder-cookie>
+                <ike-sa-exchange-type>IKEv2</ike-sa-exchange-type>
+                <ike-sa-authentication-method>Pre-shared-keys</ike-sa-authentication-method>
+                <ike-sa-local-gateway-interface>ge-0/2/1</ike-sa-local-gateway-interface>
+                <ike-sa-routing-instance></ike-sa-routing-instance>
+                <ike-sa-local-address>10.0.1.1</ike-sa-local-address>
+                <ike-sa-remote-address>10.0.1.2</ike-sa-remote-address>
+                <ike-sa-lifetime>Expires in 2214 seconds</ike-sa-lifetime>
+                <ike-sa-algorithms>
+                    <ike-sa-authentication-algorithm>hmac-sha1-96</ike-sa-authentication-algorithm>
+                    <ike-sa-encryption-algorithm>3des-cbc</ike-sa-encryption-algorithm>
+                    <ike-sa-prf-algorithm>hmac-sha1</ike-sa-prf-algorithm>
+                    <ike-sa-dhgroup>2</ike-sa-dhgroup>
+                </ike-sa-algorithms>
+                <ike-sa-traffic-statistics>
+                    <ike-sa-input-bytes>8388</ike-sa-input-bytes>
+                    <ike-sa-output-bytes>8388</ike-sa-output-bytes>
+                    <ike-sa-input-packets>125</ike-sa-input-packets>
+                    <ike-sa-output-packets>125</ike-sa-output-packets>
+                    <ike-sa-output-invalid-spi-packets>0</ike-sa-output-invalid-spi-packets>
+                    <ike-sa-input-invalid-spi-packets>0</ike-sa-input-invalid-spi-packets>
+                </ike-sa-traffic-statistics>
+                <ike-sa-misc>
+                    <ike-sa-flags>IKE SA created</ike-sa-flags>
+                    <ike-sa-num-ipsec-sas-created>14</ike-sa-num-ipsec-sas-created>
+                    <ike-sa-num-ipsec-sas-deleted>12</ike-sa-num-ipsec-sas-deleted>
+                </ike-sa-misc>
+            </ike-security-associations>
+        </ike-security-associations-block>
+    </ike-security-associations-information>

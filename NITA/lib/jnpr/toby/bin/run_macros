@@ -1,0 +1,193 @@
+#!/usr/bin/python3
+'''
+run_macros is a CLI tool that can run the macros available from within Toby
+This tool does NOT require robot or a test suite, but does require Toby
+to be installed.
+'''
+
+import sys
+
+from jnpr.toby.docs.doc_reader import reader as doc_reader
+from jnpr.toby.engines.macro.cmd_macro import cmd_macro as TobyMacro
+from jnpr.toby.init.init import init
+import getopt
+import os
+import posix
+from io import StringIO
+import datetime
+
+#later consideration: cb_obj._run_commands(macros='hardware', device) # device object optional
+
+def main(argv): #pylint: disable=too-many-locals
+    '''
+    main
+    '''
+    # declare variables
+    macro_lib = None
+    macros = None
+    targets = '{}'
+    resources = None
+    log_folder = None
+    variables = None
+    # collect command-line parameters
+    try:
+        opts, args = getopt.getopt(argv, "hym:r:t:l:v:z:", ["help", "man", "macros=", "resources=", "targets=", \
+                                                            "log_dir=", "variables=", "macro_lib="])
+    except getopt.GetoptError as error:
+        print('ERROR: ' + str(error))
+        print('Please run \'run_macros --help\' for supported options...')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print_help()
+            sys.exit()
+        elif opt == "--man":
+            show_man()
+            sys.exit()
+        elif opt == "--macro_lib":
+            macro_lib = arg
+        elif opt in ("-m", "--macros"):
+            macros = arg
+        elif opt in ("-r", "--resources"):
+            resources = arg
+        elif opt in ("-t", "--targets"):
+            targets = arg
+        elif opt in ("-l", "--log_dir"):
+            log_folder = arg
+        elif opt in ("-v", "--variables"):
+            variables = arg
+
+    if not resources:
+        print("Missing --resources\n")
+        print_help()
+        sys.exit()
+
+    if not macro_lib:
+        print("Missing --macro_lib\n")
+        print_help()
+        sys.exit()
+
+    if not macros:
+        print("Missing -t|--macros\n")
+        print_help()
+        sys.exit()
+
+    if not log_folder:
+        date_time = datetime.datetime.now()
+        current_time = str(date_time.year) \
+            + '{:02.0f}'.format(date_time.month) \
+            + '{:02.0f}'.format(date_time.day) \
+            + '-' \
+            + '{:02.0f}'.format(date_time.hour) \
+            + '{:02.0f}'.format(date_time.minute) \
+            + '{:02.0f}'.format(date_time.second)
+        log_folder = './logs/' + current_time
+        os.environ['TOBY_LOG_FOLDER'] = log_folder
+
+    # convert device name to yaml
+    uniq_id = None
+    if 'yaml' in resources:
+        init_yaml = resources
+    else: #list of devices
+        target_devices = resources.split(':')
+        yaml1 = build_yaml(target_devices)
+        uniq_id = posix.getpid()
+        init_yaml = '/tmp/run_macros_topo_' + str(uniq_id) + '.yaml'
+        file_handle = open(init_yaml, 'w')
+        file_handle.write(yaml1)
+        file_handle.flush()
+        file_handle.close()
+
+    variable_set = {}
+    if variables:
+        variable_lst = variables.split(':')
+        for key_value in variable_lst:
+            (key, value) = key_value.split('=')
+            variable_set[key] = value
+
+    print("\nConnecting to devices...")
+    # disable Toby console logging during device initialization
+    stdout_orig = sys.stdout
+    sys.stdout = StringIO()
+    init_obj = init()
+    init_obj.Initialize(init_file=init_yaml)
+    if uniq_id:
+        os.remove(init_yaml)
+    sys.stdout = stdout_orig
+    print("Device connectivity established...")
+
+    cb_obj = TobyMacro()
+    print("Loading macros from " + macro_lib + "...")
+    cb_obj.load_macros(macro_lib=macro_lib, variables=variable_set, verbosity='medium') # pylint: disable=protected-access
+    print("Macro load complete")
+
+    print("Launching commands...")
+    cb_obj.run_macros(macros=macros, resources='all', message=None, targets=targets) # pylint: disable=protected-access
+    print("Command execution complete")
+    log_dir = log_folder + '/macro_logs'
+    subfolders = [f.path for f in os.scandir(log_dir) if f.is_dir()]
+    print("\nResults available at:")
+    for subfolder in subfolders:
+        print(subfolder)
+
+def build_yaml(targets):
+    '''
+    Construct toby yaml file if resource not in LRM
+    '''
+    yaml1 = '''t: 
+  resources:'''
+    for target in targets:
+        yaml1 += '''
+    target123:
+      system:
+        primary:
+          fv-connect-channels: text
+          controllers:
+            unknown:
+              domain: englab.juniper.net
+              hostname: target123
+              mgt-ip: target123
+              osname: JunOS
+          make: juniper
+          model: unknown
+          name: target123
+          osname: JunOS'''.replace('target123', target)
+    return yaml1
+
+def print_help():
+    '''
+    Print Help
+    '''
+    print('''
+Usage: run_macros <options>
+
+   -h|--help                   This usage output
+      --man                    Man Page for Macro Engine
+   -m|--macros                 Specific macro within macro_lib file to run (required)
+      --macro_lib              Macro file consisting of macros with their command instructions (required)
+   -r|--resources              List of resources (router1:router2) or Toby yaml file (required)
+   -t|--targets                Specific targets for particular modes -  ex: {'r0':{'vty':['fpc0','fpc1']}}
+   -l|--log_dir                Log Directory (default: ./toby_logs)
+   -v|--variables              Replacement variables within macros in the form of --variables var1=value1:var2=value2,etc
+   -c|--connect_to_resources   Default: enable, Accepted values: 'enable|disable' Will not connect to resources
+
+  Example executions:
+      run_macros --macro_lib my_macros.yaml -m hardware --resources my_topo.params.yaml --variables foo=bar
+      run_macros --macro_lib my_macros.yaml -m software --resources some_topo.params.yaml --variables broadcom_fpcs=fpc1,fpc2
+      run_macros --macro_lib some_macros.yaml -m config --resources mercury
+      run_macros --macro_lib some_macros.yaml -m config --resources dizzy
+      run_macros --macro_lib some_macros.yaml -m config:cores --resources dizzy
+      run_macros --macro_lib some_macros.yaml:second_lib.yaml -m config --resources dizzy:oldfish
+ 
+  See 'toby --man macro engine' for more information on macro library design
+'''
+         )
+
+def show_man():
+    '''
+    show man pages
+    '''
+    doc_reader('macro engine')
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

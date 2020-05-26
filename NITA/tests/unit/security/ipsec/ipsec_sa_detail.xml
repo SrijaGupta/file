@@ -1,0 +1,55 @@
+ <services-security-associations-information>
+        <services-security-associations-block>
+            <svc-set-name>ipsec_ss1</svc-set-name>
+            <outside-service-interface-routing-instance>default</outside-service-interface-routing-instance>
+            <sa-tunnel-information>
+                <sa-rule-name>vpn_1</sa-rule-name>
+                <sa-term-name>term11</sa-term-name>
+                <sa-tunnel-index>1</sa-tunnel-index>
+                <sa-local-gateway>10.0.1.1</sa-local-gateway>
+                <sa-remote-gateway>10.0.1.2</sa-remote-gateway>
+                <sa-inside-interface>ms-1/0/0.1</sa-inside-interface>
+                <sa-tunnel-mtu>2000</sa-tunnel-mtu>
+                <sa-udp-encapsulate>Disabled</sa-udp-encapsulate>
+                <sa-udp-dst-port>0</sa-udp-dst-port>
+                <sa-local-identity>ipv4_subnet(any:0,[0..7]=0.0.0.0/0)</sa-local-identity>
+                <sa-remote-identity>ipv4_subnet(any:0,[0..7]=0.0.0.0/0)</sa-remote-identity>
+            </sa-tunnel-information>
+            <security-associations>
+                <sa-direction>inbound</sa-direction>
+                <sa-spi>3991417868</sa-spi>
+                <sa-aux-spi>0</sa-aux-spi>
+                <sa-mode>tunnel</sa-mode>
+                <sa-type>dynamic</sa-type>
+                <sa-state>installed</sa-state>
+                <sa-protocol>ESP</sa-protocol>
+                <sa-authentication-algorithm>hmac-sha1-96</sa-authentication-algorithm>
+                <sa-encryption-algorithm>3des-cbc</sa-encryption-algorithm>
+                <sa-soft-lifetime>Expires in 16 seconds</sa-soft-lifetime>
+                <sa-hard-lifetime>Expires in 96 seconds</sa-hard-lifetime>
+                <sa-anti-replay-service>enabled</sa-anti-replay-service>
+                <sa-replay-window-size>4096</sa-replay-window-size>
+                <sa-copy-tos-from-inner-ip-header>enabled</sa-copy-tos-from-inner-ip-header>
+                <sa-copy-ttl-from-inner-ip-header>disabled</sa-copy-ttl-from-inner-ip-header>
+                <sa-ttl-value>64</sa-ttl-value>
+            </security-associations>
+            <security-associations>
+                <sa-direction>outbound</sa-direction>
+                <sa-spi>1275526322</sa-spi>
+                <sa-aux-spi>0</sa-aux-spi>
+                <sa-mode>tunnel</sa-mode>
+                <sa-type>dynamic</sa-type>
+                <sa-state>installed</sa-state>
+                <sa-protocol>ESP</sa-protocol>
+                <sa-authentication-algorithm>hmac-sha1-96</sa-authentication-algorithm>
+                <sa-encryption-algorithm>3des-cbc</sa-encryption-algorithm>
+                <sa-soft-lifetime>Expires in 16 seconds</sa-soft-lifetime>
+                <sa-hard-lifetime>Expires in 96 seconds</sa-hard-lifetime>
+                <sa-anti-replay-service>enabled</sa-anti-replay-service>
+                <sa-replay-window-size>4096</sa-replay-window-size>
+                <sa-copy-tos-from-inner-ip-header>enabled</sa-copy-tos-from-inner-ip-header>
+                <sa-copy-ttl-from-inner-ip-header>disabled</sa-copy-ttl-from-inner-ip-header>
+                <sa-ttl-value>64</sa-ttl-value>
+            </security-associations>
+        </services-security-associations-block>
+    </services-security-associations-information>

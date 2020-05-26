@@ -1,0 +1,2240 @@
+from __future__ import print_function
+import socket
+import subprocess
+import re
+import sys
+import os
+import select
+import platform
+
+TRUE = 1 
+FALSE = 0
+tclserversocket=''
+socket_buffer = 1024
+pythonver=0
+
+def hlpyapi_env():
+    global pythonver
+	#To get python version
+    if (sys.version.split(' ')[0]).split('.')[0]=='3':
+	    pythonver=3
+    print('Current OS: '+platform.system()+','+platform.release()+','+platform.version()+';'+' python version: ' + sys.version.split(' ')[0])
+	
+    # spawn and connect to a server running on the local host
+    # for a remote server, this will have to be changed somewhat
+    # todo: implement a connection to a remote server
+    global tclserversocket
+    HOST = 'localhost'
+    PORT = 0
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.bind((HOST, PORT))
+    srv.listen(1)
+    HOST,PORT = srv.getsockname()
+    portstr = '%d' %PORT
+    if 'STC_TCL' in os.environ:
+        tcl_path = os.environ['STC_TCL']
+    else :
+        print('HLPy Error: need set system environ variable STC_TCL firstly\n')
+        sys.exit()
+    if 'HLPYAPI_LOG' in os.environ:
+        log_dir = os.environ['HLPYAPI_LOG']
+    else :
+        log_dir = os.getcwd()
+    logname = "hlpyapi.hltlog"
+    try:
+        if sys.argv[0]:
+            logname = os.path.basename(sys.argv[0])
+            logname = logname.split('.py')[0]
+            logname = logname + '.hltlog'
+    except:
+        logname = "hlpyapi.hltlog"
+    basedir = os.path.dirname(os.path.realpath(__file__))
+    print("BASEDIR= " + basedir)
+    filedir = os.path.join(basedir, "hltapiserver.srv")
+    stcserver = tcl_path +" "+filedir+ " "+portstr+" 120 log "+ log_dir +" "+ logname +" INFO"
+    subprocess.Popen(stcserver.split())
+
+    connection, address = srv.accept()
+    
+    newport = connection.recv(socket_buffer)
+    if pythonver == 3:
+        newport = newport.decode("utf-8")
+    match = re.search('[0-9]*',newport)
+    newport = match.group(0)
+    import locale
+    newport = locale.atoi(newport)
+    print("Connecting Tcl server via port", newport)
+    tclserversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tclserversocket.connect((HOST, newport))
+    print("Loading SpirentHltApi...")
+    if pythonver == 3:
+        tclserversocket.send(bytes("package require SpirentHltApi\n", 'UTF-8'))
+    else:
+        tclserversocket.send("package require SpirentHltApi\n")
+    if pythonver == 3:
+        result = (tclserversocket.recv(socket_buffer)).decode("utf-8")
+    else:
+        result = tclserversocket.recv(socket_buffer)
+    print("Loaded SpirentHltApi:",result)
+    return TRUE;
+
+def invoke(cmd):
+    print ("Native call : " + cmd)
+    ret = private_invoke(cmd)
+    return ret;
+
+    
+def private_invoke(cmd):
+    global tclserversocket
+    if pythonver == 3:
+        tclserversocket.send(bytes(cmd+'\n','UTF-8'))
+    else:
+        tclserversocket.send(cmd+'\n')
+    ret = ''
+    flag = 1
+    socket_list = [tclserversocket]
+    read_sockets, write_sockets, error_sockets = select.select(socket_list , [], [])
+
+    while flag:
+        for sock in read_sockets:
+            if sock == tclserversocket:
+                if pythonver == 3:
+                    data = (tclserversocket.recv(socket_buffer)).decode("utf-8")
+                else:
+                    data = tclserversocket.recv(socket_buffer)
+                ret += data
+                if len(data) < socket_buffer :
+                    flag = 0
+                elif ('\r' == data[len(data) -2]) :
+                    if('\n' == data[len(data) -1]):
+                        flag = 0
+    #removal of whitespaces at end of line
+    ret = re.sub(r'\s+$', '', ret)
+    #check ret: STCSERVER_RET_SUCCESS:/STCSERVER_RET_ERROR:/invalid rest
+    ret = ret.replace('STCSERVER_RET_SUCCESS:','',1)
+    if ret.find('STCSERVER_RET_ERROR') >= 0 :
+        print('HLPy',cmd,'\nError:',ret)
+        sys.exit()
+
+    return ret;
+
+def hlt_params_conv(**arg):
+    ret = ''
+    for key in list(arg.keys()):
+        if type(arg[key]) is int:
+            arg[key]= str(arg[key])
+        elif type(arg[key]) is list:
+            tcllist = '"'
+            for element in arg[key]:
+                tcllist = tcllist + ' ' +element
+            tcllist += '"'
+            tcllist = tcllist.replace('" ','"')
+            arg[key]= tcllist
+        elif type(arg[key]) is str:
+            if arg[key].find(' ') >= 0:
+                arg[key]= '"' + arg[key] + '"'
+        else:
+            print("HLPY: hlpyapi only accept int,list and string as parameters. ",key,type(arg[key]))
+        keybak = key
+        keybak = keybak.replace('python_','')
+        ret = ret+ ' -' + keybak + ' ' + arg[key]
+    return ret;
+
+
+def init_dict_recursive(keysList, value) :
+    dict_key = {}
+    keyarray = keysList.split('.')
+    mylen = len(keyarray)
+    if mylen > 0 and keyarray[0] != '' :
+        key = keyarray[0]
+        newList = keysList.replace(key, '',1)
+        newList = newList.lstrip('.')
+        dict_key[key] = init_dict_recursive(newList, value)
+        return dict_key
+    else :
+        return value
+    
+def merge_dict_recursive(a, b):
+    '''recursively merges dict's. not just simple a['key'] = b['key'], if
+    both a and bhave a key who's value is a dict then dict_merge is called
+    on both values and the result stored in the returned dictionary.'''
+    if not isinstance(b, dict):
+        return b
+    result = dict(a)
+    if pythonver == 3:
+        for k, v in b.items():
+            if k in result and isinstance(result[k], dict):
+                result[k] = merge_dict_recursive(result[k], v)
+            else:
+                result[k] = v
+    else:
+        for k, v in b.iteritems():
+            if k in result and isinstance(result[k], dict):
+                result[k] = merge_dict_recursive(result[k], v)
+            else:
+                result[k] = v
+    return result
+
+def hlt_result_conv():
+    mydict = {}
+    #catch the make sure error also can pass this function
+    try:
+        private_invoke("set hashkey \"\"; set hashvalue \"\"; set nested_hashkey \"\"")
+        private_invoke("ret_hash ret hashkey hashvalue nested_hashkey")
+        
+        keys = private_invoke("set hashkey")
+        values = private_invoke("set hashvalue")
+        
+        keysbackup = keys
+        valuesbackup = values
+        
+        #delete '\r\n'
+        keys = keys.replace('\r\n','')
+        values = values.replace('\r\n','')
+        values = values.replace('{{}}','{}')
+        keys = keys.replace(' . ','.')
+        keys = keys.replace('{','')
+        keys = keys.replace('}','')
+        valuesList = list(values)
+        values = []
+        listflag = 0
+        valuetemp = ''
+        for char in valuesList:
+            if char == '{':
+                listflag = 1
+            elif char == '}':
+                listflag = 0
+                #output list
+                values.append(valuetemp)
+                valuetemp = ''
+            elif char == ' ':
+                if listflag == 0:
+                    #output single value
+                    if valuetemp != '':
+                        values.append(valuetemp)
+                    valuetemp = ''
+                else:
+                    #buffer value
+                    valuetemp+= char
+            else :
+                #buffer value
+                valuetemp+= char
+        if valuetemp != '':
+            values.append(valuetemp)
+
+        keysList = keys.split()
+        for i in range(0,len(keysList)):
+            subdict = init_dict_recursive(keysList[i], values[i])
+            mydict = merge_dict_recursive(mydict, subdict)
+    except:
+        print("HLPY: error happened when converting keys-values:",keysbackup,valuesbackup)
+    return mydict
+
+#used be emulation_lldp_optional_tlv_config and emulation_lldp_dcbx_tlv_config
+def hlt_result_conv_special(ret):
+    returnval = {}
+    returnval['status'] = '1'
+    ret = ret.replace('\r\n','')
+    ret = ret.replace('{handle {','')
+    ret = ret.replace('}} {status 1}','')
+    ret = ret.replace('{','\{')
+    ret = ret.replace('}','\}')
+    returnval['handle'] = ret
+    return returnval
+    
+def connect(**arg):
+    #print "HLPY: connect:",  
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("sth::connect"+cmdline)
+    #convert the HLT return value keyed list into Dict and return
+    #connect need special handle
+    #{offline 0} {port_handle {{10 {{61 {{44 {{2 {{6/8 port1}}}}}}}}}}} {status 1}
+    ret = ret.replace('{','')
+    ret = ret.replace('}','')
+    ret = ret.split()
+    retnew = {}
+    index = 0
+    for element in ret:
+        index += 1
+        if element == 'offline':
+            retnew['offline'] = ret[index]
+            index1 = index + 1
+        if element == 'status':
+            retnew['status'] = ret[index]
+            index2 = index - 1
+    port_handle = ret[index1]
+    chassis = ret[index1+1]+'.'+ret[index1+2]+'.'+ret[index1+3]+'.'+ret[index1+4]
+    chassis_port = {}
+    ports = {}
+    index = index1+5
+    while index < index2:
+        ports[ret[index]] = ret[index + 1]
+        index+= 2
+    chassis_port[chassis] = ports
+    retnew[port_handle] = chassis_port
+    return retnew
+
+#####sth.device_info#####
+def device_info(**arg):
+    #print "HLPY: device_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("sth::device_info"+cmdline)
+    #convert the HLT return value keyed list into hash and return
+    #this is not same as other functions
+    ret = ret.replace('{','')
+    ret = ret.replace('}','')
+    ret = ret.split()
+    newret = {}
+    newret[ret[0]] = ret[1]
+    chassis = ret[2]+'.'+ret[3]+'.'+ret[4]+'.'+ret[5]
+    chassisdict = {}
+    availabledcit = {}
+    inusedict = {}
+    if ret.count('available') != 0:
+        availableindex = ret.index('available')
+        if ret.count('inuse') != 0:
+            inusedindex = ret.index('inuse')
+            i = availableindex+1
+            while i < inusedindex :
+                availabledcit[ret[i]] = {ret[i+1]:ret[i+2]}
+                i += 3
+    if ret.count('inuse') != 0:
+        inusedindex = ret.index('inuse')
+        if ret.count('port_handle') != 0:
+            port_handleindex = ret.index('port_handle')
+            i = inusedindex+1
+            while i < port_handleindex :
+                inusedict[ret[i]] = {ret[i+1]:ret[i+2],ret[i+3]:ret[i+4]}
+                i += 5
+    newret[chassis] = {'available':availabledcit,'inuse':inusedict}
+    if ret.count('status') != 0:
+        statusindex = ret.index('status')
+        newret['status'] = ret[statusindex+1]
+    return newret
+
+#################################generate by tool################
+#####sth.alarms_control#####
+def alarms_control(**arg):
+    #print "HLPY: alarms_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::alarms_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.alarms_stats#####
+def alarms_stats(**arg):
+    #print "HLPY: alarms_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::alarms_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.cleanup_session#####
+def cleanup_session(**arg):
+    #print "HLPY: cleanup_session:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::cleanup_session" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ancp_config#####
+def emulation_ancp_config(**arg):
+    #print "HLPY: emulation_ancp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ancp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ancp_control#####
+def emulation_ancp_control(**arg):
+    #print "HLPY: emulation_ancp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ancp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ancp_stats#####
+def emulation_ancp_stats(**arg):
+    #print "HLPY: emulation_ancp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ancp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ancp_subscriber_lines_config#####
+def emulation_ancp_subscriber_lines_config(**arg):
+    #print "HLPY: emulation_ancp_subscriber_lines_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ancp_subscriber_lines_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bfd_config#####
+def emulation_bfd_config(**arg):
+    #print "HLPY: emulation_bfd_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bfd_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bfd_control#####
+def emulation_bfd_control(**arg):
+    #print "HLPY: emulation_bfd_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bfd_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bfd_info#####
+def emulation_bfd_info(**arg):
+    #print "HLPY: emulation_bfd_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bfd_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_config#####
+def emulation_bgp_config(**arg):
+    #print "HLPY: emulation_bgp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_control#####
+def emulation_bgp_control(**arg):
+    #print "HLPY: emulation_bgp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_info#####
+def emulation_bgp_info(**arg):
+    #print "HLPY: emulation_bgp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_route_config#####
+def emulation_bgp_route_config(**arg):
+    #print "HLPY: emulation_bgp_route_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_route_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_route_info#####
+def emulation_bgp_route_info(**arg):
+    #print "HLPY: emulation_bgp_route_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_route_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_config#####
+def emulation_dhcp_config(**arg):
+    #print "HLPY: emulation_dhcp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_control#####
+def emulation_dhcp_control(**arg):
+    #print "HLPY: emulation_dhcp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_group_config#####
+def emulation_dhcp_group_config(**arg):
+    #print "HLPY: emulation_dhcp_group_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_group_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_server_config#####
+def emulation_dhcp_server_config(**arg):
+    #print "HLPY: emulation_dhcp_server_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_server_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_server_control#####
+def emulation_dhcp_server_control(**arg):
+    #print "HLPY: emulation_dhcp_server_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_server_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_server_relay_agent_config#####
+def emulation_dhcp_server_relay_agent_config(**arg):
+    #print "HLPY: emulation_dhcp_server_relay_agent_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_server_relay_agent_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_server_stats#####
+def emulation_dhcp_server_stats(**arg):
+    #print "HLPY: emulation_dhcp_server_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_server_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dhcp_stats#####
+def emulation_dhcp_stats(**arg):
+    #print "HLPY: emulation_dhcp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dhcp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dot1x_config#####
+def emulation_dot1x_config(**arg):
+    #print "HLPY: emulation_dot1x_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dot1x_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dot1x_control#####
+def emulation_dot1x_control(**arg):
+    #print "HLPY: emulation_dot1x_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dot1x_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_dot1x_stats#####
+def emulation_dot1x_stats(**arg):
+    #print "HLPY: emulation_dot1x_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_dot1x_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_efm_config#####
+def emulation_efm_config(**arg):
+    #print "HLPY: emulation_efm_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_efm_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_efm_control#####
+def emulation_efm_control(**arg):
+    #print "HLPY: emulation_efm_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_efm_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_efm_stat#####
+def emulation_efm_stat(**arg):
+    #print "HLPY: emulation_efm_stat:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_efm_stat" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_gre_config#####
+def emulation_gre_config(**arg):
+    #print "HLPY: emulation_gre_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_gre_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    ret = ret.replace('\r\n','')
+    return ret
+
+#####sth.emulation_igmp_config#####
+def emulation_igmp_config(**arg):
+    #print "HLPY: emulation_igmp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_control#####
+def emulation_igmp_control(**arg):
+    #print "HLPY: emulation_igmp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_group_config#####
+def emulation_igmp_group_config(**arg):
+    #print "HLPY: emulation_igmp_group_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_group_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_info#####
+def emulation_igmp_info(**arg):
+    #print "HLPY: emulation_igmp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_querier_config#####
+def emulation_igmp_querier_config(**arg):
+    #print "HLPY: emulation_igmp_querier_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_querier_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_querier_control#####
+def emulation_igmp_querier_control(**arg):
+    #print "HLPY: emulation_igmp_querier_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_querier_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_igmp_querier_info#####
+def emulation_igmp_querier_info(**arg):
+    #print "HLPY: emulation_igmp_querier_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_igmp_querier_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ipv6_autoconfig#####
+def emulation_ipv6_autoconfig(**arg):
+    #print "HLPY: emulation_ipv6_autoconfig:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ipv6_autoconfig" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ipv6_autoconfig_control#####
+def emulation_ipv6_autoconfig_control(**arg):
+    #print "HLPY: emulation_ipv6_autoconfig_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ipv6_autoconfig_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ipv6_autoconfig_stats#####
+def emulation_ipv6_autoconfig_stats(**arg):
+    #print "HLPY: emulation_ipv6_autoconfig_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ipv6_autoconfig_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_isis_config#####
+def emulation_isis_config(**arg):
+    #print "HLPY: emulation_isis_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_isis_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_isis_control#####
+def emulation_isis_control(**arg):
+    #print "HLPY: emulation_isis_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_isis_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_isis_info#####
+def emulation_isis_info(**arg):
+    #print "HLPY: emulation_isis_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_isis_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_isis_lsp_generator#####
+def emulation_isis_lsp_generator(**arg):
+    #print "HLPY: emulation_isis_lsp_generator:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_isis_lsp_generator" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_isis_topology_route_config#####
+def emulation_isis_topology_route_config(**arg):
+    #print "HLPY: emulation_isis_topology_route_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_isis_topology_route_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_l2vpn_pe_config#####
+def emulation_l2vpn_pe_config(**arg):
+    #print "HLPY: emulation_l2vpn_pe_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_l2vpn_pe_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lacp_config#####
+def emulation_lacp_config(**arg):
+    #print "HLPY: emulation_lacp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lacp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lacp_control#####
+def emulation_lacp_control(**arg):
+    #print "HLPY: emulation_lacp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lacp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lacp_info#####
+def emulation_lacp_info(**arg):
+    #print "HLPY: emulation_lacp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lacp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ldp_config#####
+def emulation_ldp_config(**arg):
+    #print "HLPY: emulation_ldp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ldp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ldp_control#####
+def emulation_ldp_control(**arg):
+    #print "HLPY: emulation_ldp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ldp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ldp_info#####
+def emulation_ldp_info(**arg):
+    #print "HLPY: emulation_ldp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ldp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ldp_route_config#####
+def emulation_ldp_route_config(**arg):
+    #print "HLPY: emulation_ldp_route_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ldp_route_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lldp_config#####
+def emulation_lldp_config(**arg):
+    #print "HLPY: emulation_lldp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lldp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lldp_control#####
+def emulation_lldp_control(**arg):
+    #print "HLPY: emulation_lldp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lldp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lldp_dcbx_tlv_config#####
+def emulation_lldp_dcbx_tlv_config(**arg):
+    #print "HLPY: emulation_lldp_dcbx_tlv_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lldp_dcbx_tlv_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv_special(ret)
+
+#####sth.emulation_lldp_info#####
+def emulation_lldp_info(**arg):
+    #print "HLPY: emulation_lldp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lldp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_lldp_optional_tlv_config#####
+def emulation_lldp_optional_tlv_config(**arg):
+    #print "HLPY: emulation_lldp_optional_tlv_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lldp_optional_tlv_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv_special(ret)
+
+#####sth.emulation_lsp_ping_info#####
+def emulation_lsp_ping_info(**arg):
+    #print "HLPY: emulation_lsp_ping_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lsp_ping_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mld_config#####
+def emulation_mld_config(**arg):
+    #print "HLPY: emulation_mld_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mld_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mld_control#####
+def emulation_mld_control(**arg):
+    #print "HLPY: emulation_mld_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mld_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mld_group_config#####
+def emulation_mld_group_config(**arg):
+    #print "HLPY: emulation_mld_group_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mld_group_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mld_info#####
+def emulation_mld_info(**arg):
+    #print "HLPY: emulation_mld_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mld_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_l2vpn_pe_config#####
+def emulation_mpls_l2vpn_pe_config(**arg):
+    #print "HLPY: emulation_mpls_l2vpn_pe_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_l2vpn_pe_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_l2vpn_site_config#####
+def emulation_mpls_l2vpn_site_config(**arg):
+    #print "HLPY: emulation_mpls_l2vpn_site_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_l2vpn_site_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_l3vpn_pe_config#####
+def emulation_mpls_l3vpn_pe_config(**arg):
+    #print "HLPY: emulation_mpls_l3vpn_pe_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_l3vpn_pe_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_l3vpn_site_config#####
+def emulation_mpls_l3vpn_site_config(**arg):
+    #print "HLPY: emulation_mpls_l3vpn_site_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_l3vpn_site_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_tp_config#####
+def emulation_mpls_tp_config(**arg):
+    #print "HLPY: emulation_mpls_tp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_tp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_tp_control#####
+def emulation_mpls_tp_control(**arg):
+    #print "HLPY: emulation_mpls_tp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_tp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mpls_tp_port_config#####
+def emulation_mpls_tp_port_config(**arg):
+    #print "HLPY: emulation_mpls_tp_port_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mpls_tp_port_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_msti_config#####
+def emulation_msti_config(**arg):
+    #print "HLPY: emulation_msti_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_msti_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mstp_region_config#####
+def emulation_mstp_region_config(**arg):
+    #print "HLPY: emulation_mstp_region_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mstp_region_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_multicast_group_config#####
+def emulation_multicast_group_config(**arg):
+    #print "HLPY: emulation_multicast_group_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_multicast_group_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_multicast_source_config#####
+def emulation_multicast_source_config(**arg):
+    #print "HLPY: emulation_multicast_source_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_multicast_source_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mvpn_config#####
+def emulation_mvpn_config(**arg):
+    #print "HLPY: emulation_mvpn_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mvpn_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mvpn_control#####
+def emulation_mvpn_control(**arg):
+    #print "HLPY: emulation_mvpn_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mvpn_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mvpn_customer_port_config#####
+def emulation_mvpn_customer_port_config(**arg):
+    #print "HLPY: emulation_mvpn_customer_port_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mvpn_customer_port_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mvpn_info#####
+def emulation_mvpn_info(**arg):
+    #print "HLPY: emulation_mvpn_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mvpn_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_mvpn_provider_port_config#####
+def emulation_mvpn_provider_port_config(**arg):
+    #print "HLPY: emulation_mvpn_provider_port_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_mvpn_provider_port_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_oam_config_msg#####
+def emulation_oam_config_msg(**arg):
+    #print "HLPY: emulation_oam_config_msg:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_oam_config_msg" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_oam_config_topology#####
+def emulation_oam_config_topology(**arg):
+    #print "HLPY: emulation_oam_config_topology:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_oam_config_topology" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_oam_control#####
+def emulation_oam_control(**arg):
+    #print "HLPY: emulation_oam_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_oam_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_oam_info#####
+def emulation_oam_info(**arg):
+    #print "HLPY: emulation_oam_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_oam_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospf_config#####
+def emulation_ospf_config(**arg):
+    #print "HLPY: emulation_ospf_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospf_control#####
+def emulation_ospf_control(**arg):
+    #print "HLPY: emulation_ospf_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospf_lsa_config#####
+def emulation_ospf_lsa_config(**arg):
+    #print "HLPY: emulation_ospf_lsa_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_lsa_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospf_route_info#####
+def emulation_ospf_route_info(**arg):
+    #print "HLPY: emulation_ospf_route_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_route_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospf_topology_route_config#####
+def emulation_ospf_topology_route_config(**arg):
+    #print "HLPY: emulation_ospf_topology_route_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_topology_route_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospfv2_info#####
+def emulation_ospfv2_info(**arg):
+    #print "HLPY: emulation_ospfv2_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospfv2_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ospfv3_info#####
+def emulation_ospfv3_info(**arg):
+    #print "HLPY: emulation_ospfv3_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospfv3_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_pim_config#####
+def emulation_pim_config(**arg):
+    #print "HLPY: emulation_pim_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pim_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_pim_control#####
+def emulation_pim_control(**arg):
+    #print "HLPY: emulation_pim_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pim_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_pim_group_config#####
+def emulation_pim_group_config(**arg):
+    #print "HLPY: emulation_pim_group_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pim_group_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_pim_info#####
+def emulation_pim_info(**arg):
+    #print "HLPY: emulation_pim_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pim_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ping#####
+def emulation_ping(**arg):
+    #print "HLPY: emulation_ping:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ping" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ptp_config#####
+def emulation_ptp_config(**arg):
+    #print "HLPY: emulation_ptp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ptp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ptp_control#####
+def emulation_ptp_control(**arg):
+    #print "HLPY: emulation_ptp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ptp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_ptp_stats#####
+def emulation_ptp_stats(**arg):
+    #print "HLPY: emulation_ptp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ptp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rip_config#####
+def emulation_rip_config(**arg):
+    #print "HLPY: emulation_rip_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rip_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rip_control#####
+def emulation_rip_control(**arg):
+    #print "HLPY: emulation_rip_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rip_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rip_info#####
+def emulation_rip_info(**arg):
+    #print "HLPY: emulation_rip_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rip_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rip_route_config#####
+def emulation_rip_route_config(**arg):
+    #print "HLPY: emulation_rip_route_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rip_route_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvp_config#####
+def emulation_rsvp_config(**arg):
+    #print "HLPY: emulation_rsvp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvp_control#####
+def emulation_rsvp_control(**arg):
+    #print "HLPY: emulation_rsvp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvp_info#####
+def emulation_rsvp_info(**arg):
+    #print "HLPY: emulation_rsvp_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvp_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvp_tunnel_config#####
+def emulation_rsvp_tunnel_config(**arg):
+    #print "HLPY: emulation_rsvp_tunnel_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvp_tunnel_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvp_tunnel_info#####
+def emulation_rsvp_tunnel_info(**arg):
+    #print "HLPY: emulation_rsvp_tunnel_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvp_tunnel_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_rsvpte_tunnel_control#####
+def emulation_rsvpte_tunnel_control(**arg):
+    #print "HLPY: emulation_rsvpte_tunnel_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_rsvpte_tunnel_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_sip_config#####
+def emulation_sip_config(**arg):
+    #print "HLPY: emulation_sip_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_sip_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_sip_control#####
+def emulation_sip_control(**arg):
+    #print "HLPY: emulation_sip_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_sip_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_sip_stats#####
+def emulation_sip_stats(**arg):
+    #print "HLPY: emulation_sip_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_sip_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_stp_config#####
+def emulation_stp_config(**arg):
+    #print "HLPY: emulation_stp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_stp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_stp_control#####
+def emulation_stp_control(**arg):
+    #print "HLPY: emulation_stp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_stp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_stp_stats#####
+def emulation_stp_stats(**arg):
+    #print "HLPY: emulation_stp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_stp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_vpls_site_config#####
+def emulation_vpls_site_config(**arg):
+    #print "HLPY: emulation_vpls_site_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_vpls_site_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fc_config#####
+def fc_config(**arg):
+    #print "HLPY: fc_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fc_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fc_control#####
+def fc_control(**arg):
+    #print "HLPY: fc_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fc_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fc_stats#####
+def fc_stats(**arg):
+    #print "HLPY: fc_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fc_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fcoe_config#####
+def fcoe_config(**arg):
+    #print "HLPY: fcoe_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fcoe_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fcoe_control#####
+def fcoe_control(**arg):
+    #print "HLPY: fcoe_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fcoe_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fcoe_stats#####
+def fcoe_stats(**arg):
+    #print "HLPY: fcoe_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fcoe_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fcoe_traffic_config#####
+def fcoe_traffic_config(**arg):
+    #print "HLPY: fcoe_traffic_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fcoe_traffic_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.fip_traffic_config#####
+def fip_traffic_config(**arg):
+    #print "HLPY: fip_traffic_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::fip_traffic_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.get_handles#####
+def get_handles(**arg):
+    #print "HLPY: get_handles:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::get_handles" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.interface_config#####
+def interface_config(**arg):
+    #print "HLPY: interface_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::interface_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.interface_control#####
+def interface_control(**arg):
+    #print "HLPY: interface_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::interface_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.interface_stats#####
+def interface_stats(**arg):
+    #print "HLPY: interface_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::interface_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.l2tp_config#####
+def l2tp_config(**arg):
+    #print "HLPY: l2tp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::l2tp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.l2tp_control#####
+def l2tp_control(**arg):
+    #print "HLPY: l2tp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::l2tp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.l2tp_stats#####
+def l2tp_stats(**arg):
+    #print "HLPY: l2tp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::l2tp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.labserver_connect#####
+def labserver_connect(**arg):
+    #print "HLPY: labserver_connect:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::labserver_connect" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.labserver_disconnect#####
+def labserver_disconnect(**arg):
+    #print "HLPY: labserver_disconnect:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::labserver_disconnect" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.load_xml#####
+def load_xml(**arg):
+    #print "HLPY: load_xml:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::load_xml" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+	
+#####sth.load_xml#####
+def link_config(**arg):
+    #print "HLPY: link_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::link_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+	
+#####sth.packet_config_buffers#####
+def packet_config_buffers(**arg):
+    #print "HLPY: packet_config_buffers:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_config_buffers" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.packet_config_filter#####
+def packet_config_filter(**arg):
+    #print "HLPY: packet_config_filter:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_config_filter" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.packet_config_triggers#####
+def packet_config_triggers(**arg):
+    #print "HLPY: packet_config_triggers:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_config_triggers" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.packet_control#####
+def packet_control(**arg):
+    #print "HLPY: packet_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.packet_info#####
+def packet_info(**arg):
+    #print "HLPY: packet_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.packet_stats#####
+def packet_stats(**arg):
+    #print "HLPY: packet_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::packet_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.ppp_config#####
+def ppp_config(**arg):
+    #print "HLPY: ppp_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::ppp_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.ppp_stats#####
+def ppp_stats(**arg):
+    #print "HLPY: ppp_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::ppp_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_config#####
+def pppox_config(**arg):
+    #print "HLPY: pppox_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_control#####
+def pppox_control(**arg):
+    #print "HLPY: pppox_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_server_config#####
+def pppox_server_config(**arg):
+    #print "HLPY: pppox_server_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_server_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_server_control#####
+def pppox_server_control(**arg):
+    #print "HLPY: pppox_server_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_server_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_server_stats#####
+def pppox_server_stats(**arg):
+    #print "HLPY: pppox_server_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_server_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pppox_stats#####
+def pppox_stats(**arg):
+    #print "HLPY: pppox_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pppox_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.start_devices#####
+def start_devices(**arg):
+    #print "HLPY: start_devices:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::start_devices" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.stop_devices#####
+def stop_devices(**arg):
+    #print "HLPY: stop_devices:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::stop_devices" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_config#####
+def test_config(**arg):
+    #print "HLPY: test_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_control#####
+def test_control(**arg):
+    #print "HLPY: test_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc2544_config#####
+def test_rfc2544_config(**arg):
+    #print "HLPY: test_rfc2544_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc2544_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc2544_control#####
+def test_rfc2544_control(**arg):
+    #print "HLPY: test_rfc2544_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc2544_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc2544_info#####
+def test_rfc2544_info(**arg):
+    #print "HLPY: test_rfc2544_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc2544_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc3918_config#####
+def test_rfc3918_config(**arg):
+    #print "HLPY: test_rfc3918_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc3918_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc3918_control#####
+def test_rfc3918_control(**arg):
+    #print "HLPY: test_rfc3918_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc3918_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.test_rfc3918_info#####
+def test_rfc3918_info(**arg):
+    #print "HLPY: test_rfc3918_info:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::test_rfc3918_info" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.traffic_config#####
+def traffic_config(**arg):
+    #print "HLPY: traffic_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::traffic_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.traffic_config_ospf#####
+def traffic_config_ospf(**arg):
+    #print "HLPY: traffic_config_ospf:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::traffic_config_ospf" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.traffic_control#####
+def traffic_control(**arg):
+    #print "HLPY: traffic_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::traffic_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.traffic_stats#####
+def traffic_stats(**arg):
+    #print "HLPY: traffic_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::traffic_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_device_config#####
+def emulation_device_config(**arg):
+    #print "HLPY: emulation_device_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_device_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()	
+	
+
+#####sth.emulation_vxlan_config#####
+def emulation_vxlan_config(**arg):
+    #print "HLPY: emulation_vxlan_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_vxlan_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_vxlan_control#####
+def emulation_vxlan_control(**arg):
+    #print "HLPY: emulation_vxlan_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_vxlan_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_vxlan_stats#####
+def emulation_vxlan_stats(**arg):
+    #print "HLPY: emulation_vxlan_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_vxlan_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pcs_error_config#####
+def pcs_error_config(**arg):
+    #print "HLPY: pcs_error_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pcs_error_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.pcs_error_control#####
+def pcs_error_control(**arg):
+    #print "HLPY: pcs_error_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::pcs_error_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.random_error_config#####
+def random_error_config(**arg):
+    #print "HLPY: random_error_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::random_error_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.random_error_control#####
+def random_error_control(**arg):
+    #print "HLPY: random_error_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::random_error_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.forty_hundred_gig_l1_results#####
+def forty_hundred_gig_l1_results(**arg):
+    #print "HLPY: forty_hundred_gig_l1_results:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::forty_hundred_gig_l1_results" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.imix_config#####
+def imix_config(**arg):
+    #print "HLPY: imix_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::imix_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.create_csv_file#####
+def create_csv_file(**arg):
+    #print "HLPY: create_csv_file:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::create_csv_file" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.drv_stats#####
+def drv_stats(**arg):
+    #print "HLPY: drv_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::drv_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+    
+#####sth.arp_control#####
+def arp_control(**arg):
+    #print "HLPY: arp_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::arp_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()    
+	
+#####sth.emulation_openflow_config#####
+def emulation_openflow_config(**arg):
+    #print "HLPY: emulation_openflow_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_openflow_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_openflow_control#####
+def emulation_openflow_control(**arg):
+    #print "HLPY: emulation_openflow_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_openflow_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+	
+#####sth.emulation_openflow_stats#####
+def emulation_openflow_stats(**arg):
+    #print "HLPY: emulation_openflow_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_openflow_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 	
+
+	
+#####sth.emulation_sequencer_control#####
+def emulation_sequencer_control(**arg):
+    #print "HLPY: emulation_sequencer_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_sequencer_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_http_stats#####
+def emulation_http_stats(**arg):
+    #print "HLPY: emulation_http_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_http_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_http_config#####
+def emulation_http_config(**arg):
+    #print "HLPY: emulation_http_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_http_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_http_control#####
+def emulation_http_control(**arg):
+    #print "HLPY: emulation_http_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_http_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_http_profile_config#####
+def emulation_http_profile_config(**arg):
+    #print "HLPY: emulation_http_profile_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_http_profile_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+	
+#####sth.emulation_http_phase_config#####
+def emulation_http_phase_config(**arg):
+    #print "HLPY: emulation_http_phase_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_http_phase_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_pcep_config#####
+def emulation_pcep_config(**arg):
+    #print "HLPY: emulation_pcep_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pcep_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_pcep_control#####
+def emulation_pcep_control(**arg):
+    #print "HLPY: emulation_pcep_control:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pcep_control" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_pcep_stats#####
+def emulation_pcep_stats(**arg):
+    #print "HLPY: emulation_pcep_stats:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_pcep_stats" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_ospf_tlv_config#####
+def emulation_ospf_tlv_config(**arg):
+    #print "HLPY: emulation_ospf_tlv_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_ospf_tlv_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+#####sth.emulation_bgp_route_generator#####
+def emulation_bgp_route_generator(**arg):
+    #print "HLPY: emulation_bgp_route_generator:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_bgp_route_generator" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv()
+
+#####sth.emulation_bgp_route_generator#####
+def emulation_lsp_switching_point_tlvs_config(**arg):
+    #print "HLPY: emulation_lsp_switching_point_tlvs_config:",
+    cmdline = hlt_params_conv(**arg)
+    #print cmdline
+    #execute the HLT command
+    ret = private_invoke("set ret [sth::emulation_lsp_switching_point_tlvs_config" + cmdline + "]")
+    #convert the HLT return value keyed list into hash and return
+    return hlt_result_conv() 
+
+def hello_world():
+    print("Hello World!!!\n")
+
+#################################################
+#############close the socket manually###########
+#####sth.close#####
+def close(**arg):
+    global tclserversocket
+    tclserversocket.close()
+    tclserversocket=''
+
+#as default, hlpyapi_env need be called as initial
+try:
+    hlpyapi_env()
+except:
+    print("HLPY: error happened when connecting hltapiserver and loading hltapi.")
+

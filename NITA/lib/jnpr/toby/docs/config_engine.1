@@ -1,0 +1,302 @@
+
+\" Manpage for Toby Config Engine
+.\" Contact jhayes@juniper.net to correct errors or typos
+.TH man 1 "18 Nov 2019" "1.0" "Toby Config Engine"
+.SH NAME
+Toby Config Engine v2
+.SH SYNOPSIS
+The Toby Config Engine allows users to configure resources using a hierarchical template that simplifies the device configuration process and makes changes to existing templates easier.
+.SH DESCRIPTION
+This page documents the Toby Config Engine.  The Toby Config Engine allows users to configure but JUNOS devices (both classic and EVO) as well as traffic generators/testers.  Instead of using multiple set commands, the config engine allows users to define a config in a yaml template file.  Then, by loading the template file using the keyword 'Config Engine', users can push configuration to various devices.
+.SH DEFINING CONFIG ENGINE v2
+The first step in using the Config Engine is to define what configuration you'd like to see commited to a given resource.  Once the commands needed are determined, create a yaml config template file.
+There are two formats for the Config Engine files; v1 & v2.  v1 template format has been deprecated when this man page was written, so this help will be devoted to the Config Engine template format v2 and later.
+ 
+The best way to learn the Config Engine template format is to see an example...
+ 
+.nf
+.B "junos_python_enable_config.yaml [START]"
+#(copy and paste from as needed)
+#
+# Note that even with all of the comments in this file, it is possible to copy and paste the below content
+# and edit as needed
+# There are different yaml filetypes in Toby.  The Config Engine V2 template filetype is config_template_v2...
+filetype: config_template_v2
+ 
+# Variables can be set in one of three ways; global_vars, local_vars, and arguments.  This first example is 'global_vars'
+# Global variables applied to strings that match 'var[<str>]' in the 'config' section of the template (seen later).
+# Global variables are applied first before any global variables or arguments, so global variables take precedence
+# over any other type of variables
+global_vars:
+    python3: TRUE
+ 
+# A portion of the template is true YAML.  First, a generic key called 'template_files' is necessary...
+template_files:
+ 
+  # Then define any name that you wish for the template name
+  enable_python3:
+ 
+    # Assign any needed variables;  If any 'arguments' should be passed in to the 'Config Engine' keyword that match
+    # these variables, then the arguments take precendence
+    vars:
+      action: set
+      python2: TRUE
+ 
+    # Next, the configuration itself is defined.  This is VERY different than v1 in that it is NOT YAML.
+    # Everything up to the broken pipe (|) is YAML, but everything after is just an indention format.
+    # There is no longer the construct of dictionaries and lists.  Simply indent as arguments are nested
+    # deeper and deeper in the JUNOS/EVO CLI hierarchy
+    config: |
+      var['action']
+        system
+          scripts        var['scripts']
+            language     var['language']
+              python3    var['python3']
+              python2    var['python2']
+
+    # Another example:
+    filetype: config_template_v2
+    templates:
+      CONFIG_pim_temp:
+        vars:
+          action: set
+          logical-systems: ''
+          routing-instances: ''
+          groups: ''
+        config: |
+          var['action'] 
+            var['groups'] var['logical-systems'] var['routing-instances'] protocols
+              protocols pim
+                family
+                  any
+                    disable
+                      var['pim_family_any_disable']
+                  inet
+                    var['pim_family_inet_disable']
+                  inet6
+                    var['pim_family_inet6_disable']
+
+    # Detailed example can be found here: /homes/ckaushik/ce2/example/pim_cfg_v2.yaml
+
+.B "junos_python_enable_config.yaml [END]"
+ 
+.PP
+
+.SH Difference in CEv2 yaml and CEv1 yaml
+.PP
+
+1. The major difference in CEv2 is we should have a config_template_v2 for filetype in yaml. To make a script or testcase identify that it is a CEv2 we should have file_type as config_templ
+ate_v2. we have file_type followed by templates, then we have the Config_type under which we start declaring our vas and config, where ARGS of CEv1 is vars in CEv2(where only main arguments
+ are declared, No need to declare all the configurations as we mention in CEv1). And the removal of "-" and ":" simplifies the yaml of CEv2. If the arguments are not present in yaml it can
+be directly passed from the robot.
+
+2. In CEv1 yaml we directly start with the template name and start declaring all the arguments with True or False then in Config we start entering our configurations based on the hierarchy
+starting with "-" followed by the configuration and have ":" for the separation of dynamically declaring the configuration in vars tag.
+.SH Example for CEv2 yaml:
+
+filetype: config_template_v2
+
+templates:
+  config_bgp:
+    vars:
+      action: set
+      groups: ''
+      logical-systems: ''
+      routing-instances: ''
+    config: |
+      var['action']
+        var['groups'] var['logical-systems'] var['routing-instances'] protocols
+          bgp
+            var['protocol-bgp-action']
+            accept-remote-nexthop
+              var['accept-remote-nexthop']
+            add-path-display-ipv4-address
+              var['add-path-display-ipv4-address']
+            advertise-bgp-static
+              var['advertise-bgp-static']
+              policy
+                var['advertise-bgp-static-policy']
+
+.SH CEv2 robot usage:
+
+  @{device_list} =  Set Variable          r0              r1
+  &{args} =   Create Dictionary      action=set
+  ...                                group-local-as=10
+  ...                                group-neighbor-address=<<1.1.1.1..#{count:100,step:0.0.1.0}>>
+  ...                                group-peer-as=<<1..#{count:100,step:1}>>
+  ...                                group-neighbor-family-inet-nlri=any
+  ...                                group-type=internal
+
+    Config Engine   device_list=@{device_list}    vars=${args}    config_templates=config_bgp     template_files= /volume/regressions/toby/test-suites/sanity/toby/config/bgp_cfg_v2.yaml   c
+ommit=${False}    disable_load=${True}
+
+
+.SH CEv2 with interface list
+
+ ${device} =  Set Variable          r0
+ @{device_list} =  Set Variable          r0              r1
+ ${interfaces}=                    Create List  lo0.0  ge-0/0/0.0  ge-0/0/3.0
+ &{args} =   Create Dictionary      interface=${interfaces}
+
+Config Engine  device_list=@{device_list}   config_templates=CONFIG_pim_temp   template_files=/volume/regressions/toby/testsuites/sanity/toby/config/pim_cfg.yaml     resolve_vars=True     v
+ars=${args}    commit=${False}      disable_load=${True}
+
+.SH CEv2 with template list
+ Template list are supported in CEv2 by passing yaml in CEv2 format, And the basic usage of keyword is similar to CEv1.
+  Example:
+
+  @{device_list} =  Set Variable          r0              r1
+ ${Test}  Create Dictionary          deactivate=abc
+ &{args2} =  Create Dictionary       group=G1
+     ...                                group-family-inet-nlri=labeled-unicast
+     ...                                group-family-inet-nlri-egress-protection=${Test}
+
+     ${template_list} =          Create List     con_bgp    config_bgp
+   Config Engine    device_list=@{device_list}    vars=${args2}    config_templates=${template_list}   template_files=/volume/regressions/toby/test-suites/sanity/toby/config/bgp_cfg_templat
+e.yaml   commit=${False}    disable_load=${True}
+
+.B -- For more details, please refer the config engine guide: https://junipernetworks.sharepoint.com/sites/Projects1/toby/_layouts/15/Doc.aspx?sourcedoc={72e96738-94e5-448f-a361-dfb605bda29
+f}&action=default&mobileredirect=true
+
+
+.SH TOBY CONFIG ENGINE V1
+
+.SH CONFIGURING WITH CONFIG KEYWORD:
+The CONFIG keyword appears at two levels. One is under the device tag, such as 'r0', one is under the 'interfaces/ interface_tag' level. You can build your entire config
+uration, including interface level config, in the CONFIG knob under the device tag. But there are benefits of having interface config at the interfaces level CONFIG knob
+s. For example, most router tester config happens at port/interface level.
+.b JUNOS configuration format
+All JUNOS config knobs can be used as keys/list elements in the config. No new keywords are required. You can use c_vars to reference the values from the t_dict to avoid
+ hardcoding topology related values.
+    # r0:
+    CONFIG:
+    #- annotate interfaces "toby added"
+    #- protocols:
+    #- bgp:
+    #- neighbor tag['pe@neighbor:loop-ip']
+    #- ospf:
+    #- area 0:
+    #interface:
+    #- cv['r0__r0r1_1__pic'].0
+    #- cv['r0__r0r1_2__pic'].<<4..8#{step:2}>
+    #- isis:
+    #- interface tag['isis']
+    #- mpls:
+    #- label-switched-path:
+    #- <<to1..to10>> to <<1.1.1.1..#{step:/24}>>
+    #- <<to11..to20>> to <<2.1.1.1..#{step:0.0.1.0}>>
+    #- routing-options:
+    #- autonomous-system: 100
+An important note to the config content is that the top knob 'set' in most cases is not necessary. This makes the template more powerful (explained later in the template
+ section). The 'set' knob will be added automatically by the config engine when it compiles the whole config.
+If you use the 'list' format of YAML (with '-'), the order of your config is kept. You may need this order when it comes to firewall terms or policies. Otherwise, it is
+just a personal preference of either using the 'dict' or 'list' yaml format. The only caveat is that you need to make sure that it follows the YAML syntax, and keep them
+ consistent.
+
+.SH DEFINING CONFIG LOAD KEYWORD
+CONFIG LOAD KEYWORD is used to load a saved config file onto a device. 
+Config load keyword should be passed with the arguments: device - It is a device tag as shown in the topology yaml file, or in t. Default is set to None, file   - It is mandatory argument it consists name of the config file with path. Default is set to None, commit -optional argument
+ 
+EXAMPLE
+        config load         device=${dut}        file="/var/tmp/.CONF"
+
+    :return:
+        True if config is loaded successful
+        raise exception if failed, with response from HLDCL load_config() call
+
+
+
+.SH DEFINING CONFIG SET KEYWORD
+DEFINING CONFIG KEYWORD is used to set configuration onto a device. 
+config set keyword should be passed with the arguments:device_list- It is a mandatory argument which consists of list of device tags. If it is one device it can be in string format, cmd_list   - It is a mandatory argument which consists of list of set command. the flatterned t_vars can be used in the set commands to  avoid hard coded components/parameters, such as interface names ( Config Engine dynamically resolves the t_vars, and turn into actual values in the device), commit     - It is a optional argument. Default is set to None.
+
+EXAMPLE
+        Config Set    device_list=r3    cmd_list=${cmds}   commit=True
+
+    :return:
+        True if config is loaded successful
+        raise exception if failed, with response from HLDCL config() call
+
+.SH DEFINING GET CV
+DESCRIPTION:
+Defining set cv is a keyword    
+Arguments for Defining get CV are :reconnect   - It is an optional argument. Default is set to False(recoonect is for spirent reconnect, when you can get the CV data with all handles back after reconnect.), cv_file     - It is an optional argument. Default is set to None, cv  - It is the cv name.
+
+EXAMPLE
+        ${cv} = GET CV
+        :return:cv else raise an exception
+
+.SH DEFINING ADD CV
+DEFINING ADD CV adds user cv to config engine object's cv database.
+Arguments for defining add cv are key, value, reconnect, cv_file
+
+EXAMPLE
+     Add CV key=rsvp_session_handle_${role}_${num}
+     value=${rsvp_session_handle}
+
+     :return:None
+
+.SH CONFIG ENGINE BUILTIN KEYWORDS:
+The 'TEMPLATES' and 'TEMPLATE_FILES' keyword
+
+These 2 top level keywords can be used to define snippets of config that can be reused. Templates defined in each area can be used by all the devices/interfaces. If you
+chose to make a few of your own template in the same yaml file, you can use 'TEMPLATES'.
+If you want to share your templates, or want to use them in other test suites, you can save your templates in a separate file.
+    TEMPLATE_FILES: # list of template files you want to import
+         - /homes/jpzhao/Toby/MyTest/my_templates.yaml
+
+TEMPLATES: # define templates locally
+A template can have multiple args/variables. Every arg/variable needs to be specified in the ARGS, such as ip, and opt. The config content in the template follows the sa
+me syntax as in the
+Arguments: [files]
+
+A template file may include a list of templates in different form OR uder the 'TEMPLATES' keyword. AND/OR has a 'TEMPLATE_FILEs' knob that points to other template files.
+Argument is files it is a mandatory argument and it is file name.
+
+EXAMPLE
+      read Template Files files=FILE_NAME
+
+Example Template File:
+       # my template file
+       filter_new:
+ARGS:
+       - term_list: <<new1..new12>>
+CONFIG:
+       filter new:
+       - term var['term_list']:
+       - from protocol <<(ospf, icmp, rsvp)..>>
+       my_intf:
+       ARGS:
+       - ip
+       CONFIG:
+       unit 0 family: inet address var['ip']
+       my_protocols:
+ARGS:
+       - if_name: xyz
+CONFIG:
+  protocols:
+       - rsvp interface <<var['if_name']>>
+       - mpls interface var['if_name']
+       - isis interface var['if_name'] level 1 disable
+  my_proto_tags:
+CONFIG:
+  protocols:
+       - rsvp interface tag['rsvp']
+       - mpls interface var['mpls']
+       - isis interface var['isis'] level 1 disable
+
+.B The 'VARS' keyword
+
+You can define some variables in the config yaml file, and assign default values to them via the 'VARS' keyword. Then you can call the whole config yaml file with vars d
+efined in ROBOT or your python code using the 'vars' argument.
+Example:
+    VARS:
+     - vlan_num: 3
+    r0:
+    interfaces:
+    r0r1_2:
+    CONFIG:
+    - unit <<1..var['vlan_num']>> vlan-id <<1..>>
+    In Robot file
+    Load Config with Vars &{vars} Create Dictionary vlan_num 100
+    Config Engine config_file=myCfg.yaml vars=$vars

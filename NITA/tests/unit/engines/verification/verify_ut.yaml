@@ -1,0 +1,32 @@
+--- 
+VERIFY: 
+  USE_TEMPLATE: 
+    - OSPF_JUNOS_TMPL.yaml
+  device0: 
+    OSPF_neighbor:
+      TEMPLATE: 'OSPF_neighbor' 
+      full_neighbor_count: 
+        iterate_until: 
+          interval: 10
+          timeout: 20
+        value: 9
+    template['ospf_interface_check']: 
+      ARGS: 
+        - 
+          intf: ae1.15
+      cmd: "show ospf interface var['intf'] detail"
+      parameters: 
+        hello-interval: 
+          operator: is-equal
+          value: 30
+        interface-type: 
+          iterate_until: 
+            interval: 10
+            timeout: 20
+          operator: is-equal
+          value: LAN
+        ospf-interface-topology: 
+          ospf-topology-metric: 
+            operator: is-equal
+            value: 1
+      xpath: /ospf-interface-information/ospf-interface

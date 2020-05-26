@@ -1,0 +1,600 @@
+.\" Manpage for Toby Framework Variables
+.\" Contact aburri@juniper.net to correct errors or typos
+.TH man 1 "16 Mar 2020" "1.0" "Toby Framework Variables"
+.SH NAME
+Toby Framework Variables
+.SH SYNOPSIS
+Framework Variables in Toby provides a standardized approach When strings changeS often in the test data. With variables you only need to make these changes in one place
+When creating system-independent and operating-system-independent test data. Using variables instead of hard-coded strings
+.SH DESCRIPTION
+This page documents the  Toby Framework Variables information.
+
+.SH GENERAL FRAMEWORK VARIABLE
+
+fv-connect-user:
+   allowed-values: <str>
+   description:
+       This knob uses a user name  other than 'regress' to log into a device
+       Example-
+       r0 {
+           system{
+               fv-connect-user "root";
+         }
+     }
+
+fv-connect-password:
+   allowed-values: <str>
+   description:
+       This knob uses password other than 'MaRtInI' to log into a device
+       Example-
+       r0 {
+          system{
+              fv-connect-password "Embe1mpls";
+        }
+     }
+
+fv-core-check:
+   allowed-values: [enable]
+   description:
+       This knob enables core checking
+       Example-
+       r0 {
+          system{
+              fv-core-check "enable";
+         }
+     }
+
+fv-tags:
+   allowed-values: tag1:tag2:tag3
+   description:
+       This knob provides a list of attributes assigned to a system
+       or interface for easy retrieval
+       Examples-
+       Robot (single tag)
+       ${duts} = Get Resource List tag=dut
+       Python (single tag)-
+       duts = t.get_resource_list(tag='dut')
+       Robot (multiple tags)-
+       @{tags} = Create List test l2
+       ${interfaces} = Get Interface List tag=@{tags}
+       Python (multiple tags)-
+       interfaces = t.get_interface_list(tag=['test', 'l2'])
+       r0 {
+         system {
+           fv-tags  "dut";
+         }
+         interfaces {
+           intf1 {
+             fv-tags "uplink:egress";
+           }
+         }
+       }
+
+fv-connect-channels:      
+   allowed-values:
+      - all
+      - pyez
+      - text
+   description:
+       This knob explicitely states which channels to connect to (default options are pyez & text)
+       Examples-
+       r0 {
+          system {
+               fv-connect-channels   "all";
+           }
+       }
+
+fv-snmp-mib-path:
+  description:
+    This knob allows user to provide a custom mib directory when creating a snmp channel.
+    Examples-
+    r0 {
+      system {
+        fv-snmp-mib-path "/volume/labtools/lib";
+      }
+    }
+
+fv-selenium:
+   allowed-values:
+      - enable
+   description:
+       Selenium-Grid allows you run your tests on different machines against different browsers in parallel.
+       This knob spcifies the location of selenium tool from the local path
+       Examples-
+       r0 {
+         system {
+             fv-selenium-grid-jar "\\TOBY\\selenium-server-standalone-3.5.2.jar"
+           }
+       }
+
+fv-connect-transport:
+   allowed-values:
+      - ssh
+      - telnet
+   description:
+       This knob defines which transport protocol to use (default is set to ssh,
+       telnet is also allowed)
+       Examples-
+       r0 {
+          system {
+               fv-connect-transport   "telnet";
+           }
+       }
+
+fv-connect-ssh-key-file:
+   description:
+       This knob defines a file to store the ssh keys
+       Examples-
+       r0 {
+          system {
+               fv-connect-ssh-key-file   "~ck/.ssh/id_rsa";
+           }
+       }
+
+fv-connect-system-nodes:
+   allowed-values:
+      - all
+      - primary
+   description:
+       This knob states whether or not to connect to all system nodes in a complex system
+       Examples-
+       r0 {
+          system {
+               fv-connect-system-nodes   "all";
+           }
+       }
+
+fv-connect-controllers:
+   allowed-values:
+      - all
+      - none
+   description:
+       This knob defines which controllers (REs) to connect to (default is set to master RE)
+       Examples-
+       r0 {
+          system {
+               fv-connect-controllers   "all";
+           }
+       }
+
+fv-connect-targets:
+   allowed-values:
+      - management
+      - console
+   description:
+       This knob connects to either console or management. Default is management.
+       Supported values are console/management
+       Examples-
+       r0 {
+          system {
+               fv-connect-targets   "console";
+           }
+       }
+
+fv-proxy:
+   description:
+       This knob used to proxy all commands to devices through an ssh proxy
+       Examples-
+       r0 {
+          system {
+               fv-proxy   "host=proxy.juniper.net:user=ABC:password=XYZ";
+           }
+       }
+
+fv-load-baseline-config-from:
+   description:
+       This knob loads JUNOS config from designated path on device
+       If set to 'default', will load from /var/tmp
+       Examples-
+       r0 {
+          system {
+               fv-load-baseline-config-from   "default";
+           }
+       }
+
+fv-interface-status-check:
+   allowed-values:
+      - enable
+   description:
+       This knob checks JUNOS interfaces to ensure that they are UP.
+       Used in conjunction with 'Toby Suite Setup' keyword.
+       Examples-
+       fv-interface-status-check {
+       r0 {
+         system {
+           make "juniper";
+         }
+       }
+       r1 {
+         system {
+           make "juniper";
+         }
+       }
+
+fv-connect-channel-ports:
+    description:
+       This knob is used to connect to channel ports using either text or pyez channel.
+       This allows you to define the ssh and Netconf ports
+       Examples-
+       r0 {
+         system {
+           fv-connect-channel-ports "text=22:pyez=8300";
+         }
+       }
+
+fv-debug:
+   allowed-values:
+      - enable
+   description:
+       This knob is used for particular platforms, create addition debug logs
+       Examples-
+       rt0 {
+         system {
+           make "spirent";
+           fv-debug "enable";
+         }
+       }
+
+fv-load-baseline-config-timeout:
+   description:
+       This knob waits for default timeout to get the device handle while loading baseline config
+       If set to 'default', it will wait for 180s
+       Examples-
+       r0 {
+          system {
+               fv-load-baseline-config-timeout   "180";
+           }
+       }
+
+.SH FRAMEWORK VARIABLE FOR SOFTWARE INSTALL
+
+fv-software-install:
+   description:
+       This knob is used to upgrade software image from a default path
+       Examples-
+       r0 {
+          system {
+               fv-software-install   "/volume/build/junos/eabu-builder/";
+           }
+       }
+
+.SH FRAMEWORK VARIABLE FOR JPG
+
+
+fv-jpg-bridge-name:
+   description:
+       This knob specifies the bridge name
+       Example-
+         rt0-r0-jpg0 {
+             fv-jpg-bridge-name"r0-rt0";
+             link "rt0r0-jpg0";
+         }
+
+fv-jpg-replication-factor:
+   description:
+       This knob, if not set is set to 1 by default
+       Example-
+         rt0-r0-jpg0 {
+             fv-jpg-replication-factor "1";
+             fv-jpg-bridge-name"r0-rt0";
+             link "rt0r0-jpg0";
+         }
+
+.SH FRAMEWORK VARIABLE FOR IXIA
+
+fv-ixia-appserver-port:
+   description:
+       This knob connects on port other than IXIA appserver default
+       Example-
+       rt0{
+           system{
+               fv-ixia-appserver-port 8032;
+           }
+       }
+
+fv-ixia-license-server:
+   description:
+       This knob for IxVM, provides ability to license IXIA VM ports
+       Example-
+       rt0{
+           system{
+                fv-ixia-license-server "10.32.123.213";
+           }
+       }
+
+fv-ixia-appserver:
+   description:
+       This knob is used to connect to a Ixia GUI for which the ports are mentioned
+       in params file.
+       rt0{
+           system{
+                fv-appserver "toby-as1.englab.juniper.net";
+           }
+       }
+
+fv-ixia-physical-port-type:
+   description:
+       This knob allows the configuration of mixed interfaces types (copper and fiber)
+       in the same topology
+       Example-
+       rt0{
+           system{
+                fv-ixia-physical-port-type "copper";
+           }
+       }
+
+fv-ixia-license-type:
+   description:
+       This knob for Ixia, provides the type of license for IXIA VM ports
+       Example-
+       rt0{
+           system{
+                fv-ixia-license-server "10.102.148.236";
+           }
+       }
+   
+fv-ixia-config-file:
+   description:
+       This knob for Ixia, provides a config file to load from
+       Example-
+       rt0{
+           system{
+                make "ixia";
+                fv-ixia-config-file "mycfg.ixncfg";
+           }
+       }
+
+fv-ixia-return-detailed-handles:
+   allowed-values:
+      - enable
+      - disable
+   description:
+       This knob for Ixia is used to 'avoid' getting handles back
+       By default the knob is "enable"
+       Example-
+       rt0{
+           system{
+                fv-ixia-return-detailed-handles "disable";
+           }
+       }
+
+fv-ixia-port-order:
+   description:
+       This knob for Ixia, gives the order in which the ports are defined.
+       Example-
+       rt0{
+           system{
+                make "ixia";
+                fv-ixia-port-order "rt0_r0_1:rt0_r0_2";
+           }
+       }
+
+
+fv-ixia-min-version:
+   description:
+       This knob for ixia is used to list the minimum supported ixia version.
+       Example-
+       rt0{
+           system{
+                make "ixia";
+                fv-ixia-min-version "8.20";
+           }
+       }
+
+
+.SH FRAMEWORK VARIABLE FOR IXIA IXLOAD
+
+
+fv-ixload:
+   Description:
+      This knob instructs Toby to utilize IxLoad APIs (vs. IxNetwork) on a given IXIA device
+      With Ixload APIs we have keywords such as abort_test,add_activity,get_session,run_test,etc
+      Example-
+      Execute Tester Command ${rt_obj} command=abort_test
+      Execute Tester Command ${rt_obj} command=add_activity
+      Execute Tester Command ${rt_obj} command=run_test
+      Execute Tester Command ${rt_obj} command=save_as
+
+.SH FRAMEWORK VARIABLE FOR SPIRENT
+
+
+fv-spirent-labserver:
+   description:
+      This knob specifies a Spirent labserver to use instead of talking directly to chassis
+      Example-
+      rt0 {
+           system{
+               fv-spirent-labserver "10.38.34.45";
+          }
+      }
+
+fv-spirent-labserver-session-name:
+   description:
+      This knob specifies a Spirent labserver where the session can be named
+      Example-
+      rt0 {
+           system{
+               fv-spirent-labserver-session-name "V4-OVER-V6-TOBY";
+          }
+      }
+
+fv-spirent-labserver-preserve-session:
+   allowed-values:
+      - enable 
+   description:
+      This knob specifies a Spirent labserver where the session can be preserved
+      Example-
+      rt0 {
+           system{
+               fv-spirent-labserver-preserve-session  "enable";
+          }
+      }
+
+fv-spirent-labserver-connect-existing-session:
+   allowed-values:
+      - enable 
+   description:
+      This knob specifies a Spirent labserver which connects to existing labserver session if any
+      Example-
+      rt0 {
+           system{
+               fv-spirent-labserver-connect-existing-session  "V4-V6-existing-TOBY";
+          }
+      }
+
+fv-spirent-license-server:
+   description:
+      This knob specifies a Spirent license server for vSpirent
+      Example-
+      rt0{
+          system{
+              fv-spirent-license-server "10.38.32.34";
+          }
+      }
+
+fv-spirent-hltapi-path:
+   description:
+      This knob specifies a Spirent license server for vSpirent
+      Example-
+      rt0{
+          system{
+              fv-spirent-hltapi-path   "/homes/cxk/tobyscript/nx/HLTAPI_4.67_GA_822707";
+          }
+      }
+
+fv-spirent-config-file:
+   description:
+       This knob for Spirent, provides a config file to load from
+       Example-
+       rt0{
+           system{
+                make "spirent";
+                fv-spirent-config-file "b2bBgp.xml";
+           }
+       }
+
+fv-spirent-port-order:
+   description:
+       This knob for spirent, gives the order in which the ports are defined.
+       Example-
+       rt0{
+           system{
+                make "spirent";
+                fv-spirent-port-order "rt0_r0_1:rt0_r0_2";
+           }
+       }
+
+.SH FRAMEWORK VARIABLE FOR PARAGON
+
+fv-paragon-server-ip:
+   Description:
+       This knob defines the Paragon server IP
+       fv-paragon-server-ip "10.32.2.5";
+
+.SH FRAMEWORK VARIABLE FOR AVALANCHE
+
+fv-avalanche:
+   description:
+       This knob enables Avalanche APIs (vs. STC HLTAPI)
+       for those platforms that support Spirent L4+
+       Specifies 'client' or 'server' role within port stanza (required) for Avalanche
+       Example-
+       fv-avalanche-port-role "client";
+
+fv-avalanche-port-role:
+   allowed-values:
+      - client
+      - server     
+   description:
+       This knob tells avalanche port whether to be a client or a server
+       Example-
+       rt0 {
+         system {
+           make "Spirent";
+           fv-avalanche "enable";
+         }
+         interfaces {
+           intf1 {
+            fv-avalanche-port-role "client";
+           }
+           intf2 {
+             fv-avalanche-port-role "server";
+           }
+         }
+       }
+  
+fv-avalanche-api-path:
+   description:
+       This knob specifies different path to find av.py module.
+       Useful for development and testing of pre-release av.py.
+       Example-
+       rt0 {
+         system {
+           make "Spirent";
+           fv-avalanche "enable";
+           fv-avalanche-api-path "/homes/jdoe/new_av";
+         }
+       }
+
+fv-avalanche-license-path:
+   description:
+       This knob points to the path of the Avalanche license
+       Example-
+       rt0 {
+         system {
+           make "Spirent";
+           fv-avalanche "enable";
+           fv-avalanche-license-path "/homes/juser/my_license";
+         }
+       }
+
+.SH FRAMEWORK VARIABLE FOR BREAKINGPOINT
+
+fv-breakingpoint-group:
+   description:
+      This knob uses designate BreakingPoint group (Allowable values are 1-12)
+      It declares which pre-configured group (1-12) on the BreakingPoint appliance to use.
+      Example-
+      fv-breakingpoint-group 3;
+      rt0 {
+        system {
+          make "Ixia";
+          model "BreakingPoint";
+          fv-breakingpiont-group 9;
+        }
+      }
+
+.SH FRAMEWORK VARIABLE FOR MONITORING ENGINE
+
+fv-monitoring-engine:
+   description:
+      Monitoring engine provides keywords to collect, store analyse
+      and present data within the context of an arbitrary Toby test
+      suite running over an arbitrary topology.
+      fv-monitoring-engine value can also simply be set to 'enable'
+      fv-monitoring-engine "interval=10 (idea) nfile=monitor.yaml";
+      Example-
+      fv-monitoring-engine "enable";
+      fv-monitoring-engine "interval=1";
+
+
+.SH FRAMEWORK VARIABLE FOR MACRO ENGINE
+
+fv-macro-engine:
+   description:
+       This knob is used to run macros on failure.  
+       It expects macro_lib and macro as mandatory fields
+
+
+.SH FRAMEWORK VARIABLE FOR CODE-COVERAGE
+
+fv-code-coverage:
+    description:
+        This knob enables gather gcov data from instrumented images
+        and register with code coverage services
+        Parameters like PR, Activity ID, Activity type RLI, Release, Data Path,
+        Sandbox Path can be specified
+
+
+.SH AUTHOR
+Akhilkumar Burri(aburri@juniper)

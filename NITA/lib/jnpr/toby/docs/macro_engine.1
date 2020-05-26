@@ -1,0 +1,256 @@
+.\" Manpage for Toby Macro Language
+.\" Contact jhayes@juniper.net to correct errors or typos
+.TH man 1 "18 Oct 2018" "1.0" "Toby Macro Engine"
+.SH NAME
+Toby Macro Engine
+.SH SYNOPSIS
+The Toby Macro Engine allows users to call batches of operations on target devices at time of failure
+.SH DESCRIPTION
+This page documents the Toby Macro Engine.  The Toby Macro Engine allows users to run various device commands on a give device at the time of failure.  This is particularly useful because it can be difficult and time consuming for engineers to try and reproduce a given issue.  Ideally, enough information can be given to a developer to remedy the issue by giving said developer lots of debug information about the state of a given device when a test fails. The Toby Macro Engine provides these capabilities via custom macros that can run at time of failure.
+.SH DEFINING MACROS
+The first step in using the Macro Engine is to define what commands you'd like to see executed at the time of failures. These commands are defined in a macro library yaml file.  The commands are designed to 'try' and run on the devices but if a command failes or isnt' compatible, it will fail gracefully and continue through the rest of the commands.  This avoids one command 'blocking' the rest of the commands from execution.
+Here is an example and breakdown of a typical macro library...
+
+.nf
+.B "bgp_macro.yaml [START]"
+#(copy and paste from as needed)
+#
+# Note that even with all of the comments in this file, it is possible to copy and paste the below content 
+# and edit as needed
+# There are different files that have different functions in the Macro Engine, so it is important 
+# to specify the filetype at the start of the file.  In this case, we have a basic macro library. 
+filetype: macro_lib
+
+# Variables are supported in the macro engine and are accessed in the macro via a var[] syntax.
+# Variables can come from various sources; a 'vars' section of the macro library (as shown below), 
+# Toby tv[] variables, Robot variables, Robot keyword parameters and variables supplied to the 
+# command line version of the macro engine 'run_macros' (more on the CLI version later)
+vars:
+  config_file: /var/tmp/baseline-config.conf
+
+# Macros run on particular resources based on the resource attributes and the macro constraints.
+# It is possible to import custom constraints.  In the case below, the contraint 'chipset'
+# has been associated with various Juniper part-numbers even though 'chipset' isn't a native 
+# constraint.  More on imports later.
+
+import:
+- ../constraints/chipset.yaml
+
+# Here is a macro of macros.  If the bgp macro is employed, it would call multiple other macros as listed.
+
+bgp:
+  macros:
+  - generic
+  - get_cores
+  - get_config
+  - get_hw_inventory_info
+  - vty_generic
+  - vty_trio
+
+# This generic macro example shows a constraint where the commands will only run on JUNOS mx480 devices.
+# The constraints below are broken down into two optional categories; resources and targets (discussed later).
+# The 'resources' section will use the data from the Toby yaml input file (if provided)
+# and only run the commands listed if a resource matches the contraints.
+
+generic:
+  constraints: 
+    resources:
+      model: mx480
+      osname: junos
+  commands:
+    # supported commands: cli,shell,vty,cty,rpc,pyez,rest and get_file
+    cli:
+    - set cli timestamp
+    - show system uptime
+    - show bgp statistics | no-more
+    - show interface var[intf_desc_level] var[r0__intf1__pic] | no-more
+    shell:
+    - ls /tmp
+    - echo var[r0__re0__mgt-ip]
+
+# Below is a small macro that searches for cores on the device and collects them.
+
+get_cores:
+  constraints:
+    resources:
+      osname: junos
+  commands:
+  - fetch_cores()
+
+# Here is a macro that can collect a file off of a device and save it locally
+# Note that the local variable 'config_file' mentioned at the start of this library
+# is now being employed
+
+get_config:
+  constraints:
+    resources:
+      osname: junos
+  commands:
+  - get_file(var[config_file])
+
+# In this next example, the macro will make a GET RESTful API call to the company's central
+# inventory control system to gather extra data not available via the device hardware information
+# This may include the devices location, or perhaps elevation on a rack.
+
+get_hw_inventory_info:
+  constraints:
+    resources:
+      osname: junos
+  commands:
+  - rest('https://hw_inv1.company.net/api/v1/hw/var[r0__name])
+
+# There are also macros with multiple targets for the given command.  
+# Below is a macro that is targeted at all fpcs.  This uses a special call-back function called 'show_chassis_hardware'.
+# In this case, the target are the fpcs on a JUNOS device.  The Macro Engine will iterate through and run 'vty [target]'
+# for each fpc found on the device and run the commands specified.  Note that there is still a model constraint.
+# This constraint will still be honored, so the commands will only run on an mx480 in this case.
+
+vty_generic:
+  constraints:
+    resources:
+      model: mx480
+    targets:
+      vty:
+        function: show_chassis_hardware
+        name: fpc
+  commands:
+    vty:
+    - show version
+
+# This next macro is a bit more complicated.  The chipset.yaml file imported earlier is now going to be used.
+# The constraint 'chipset' is not an attribute used anywhere in Toby and is not a concept on the JUNOS devices.
+# However, chipset has been associated with particular module part numbers.  So the chipset-to-partnumber-list 
+# has been created in another file.  Otherwise, the entire part list for a given chipset would have to be listed here
+# and that would make a mess out of the macro.  Also, if another part-number were to be added to a given chipset, 
+# it is much easier to add it to a central 'chipset.yaml' file than have to edit every macro that needs chipset.
+
+import:
+  - ../constraints/chipset.yaml
+
+vty_trio:
+  constraints:
+    resources:
+      osname: JUNOS
+    targets:
+      vty:
+        function: show_chassis_hardware
+        chipset: trio
+  commands:
+    vty:
+    - show version
+
+# If the fpc targets for vty can't be derived from imported constraints, or native 'show chassis hardware' attributes,
+# it is possible to set the targets to a variable, which can be set at runtime.
+# If the variable is NOT passed in at runtime, it will simply skip this macro section.
+
+import:
+  - ../constraints/chipset.yaml
+
+vty_trio:
+  constraints:
+    resources:
+      osname: JUNOS
+    targets:
+      vty: var[broadcom_fpcs]
+  commands:
+    vty:
+    - show version
+
+
+.B "bgp_macro.yaml [END]"
+
+.PP
+.SH RUNNING MACROS
+There are three ways to invoke a macro.  
+.PP
+.B "1.) Toby keyword 'Run Macro on Failure'" 
+.fi
+A Keyword has been provided to allow users to assign a macro (or macros) within their Robot test suite. After the 'Run Macro on Failure' is called, the instructions of the macro will be registered in the background until a failure occurs.  These instructions will be invoked at the exact time at which the testcase failed.  This is before the Test Teardown and before any other keywords can run.  This allows test engineers to focus on the content of the testcase and avoid the need to employ fail/pass logic with explicit macro execution calls.
+.nf
+
+Robot testcase example:
+Example Testcase1 - Check for version 18.1 on device running 16.1 in order to invoke failure - Expected Result: FAIL
+  [tags]  tc1
+  Run Macros on Failure  macro_lib=./macros/tech_area/bgp/bgp_macros.yaml  macro=bgp  intf_desc_level=terse
+  ${r0_handle} =  Get Handle   resource=r0
+  Execute CLI Command on Device  ${r0_handle}  command=show version | match 18.1  timeout=${4}  pattern=Junos:\\ 18.1
+
+.PP
+.B "2.) Toby yaml params input file (-p|--params)"
+.fi
+If a Toby Test Suite has already been written, and the goal is to employ the macros WITHOUT changing the original test suite, then the fv-macro knob can be employed.  Use the fv-macro knob to describe which macro to be run along with additional parameters and/or variables. Note that Toby supports more than one params yaml file as input (colon delimited) when calling Toby and the two yaml files will merge together to form one file during execution.
+.nf
+
+Toby params yaml input file example:
+t:
+  fv-variables:
+    fv-macro:
+      macro: bgp
+      macro_lib: ./macros/tech_area/bgp/bgp_macros.yaml
+      variables:
+        broadcom_fpcs: ['fpc1','fpc2']
+        intf_desc_level: terse
+  resources:
+    r0:
+      interfaces:
+        intf1:
+          name: xe-0/0/0.0
+          pic: xe-0/0/0
+      system:
+        primary:
+          controllers:
+            re0:
+              domain: englab.juniper.net
+              hostname: torch
+              mgt-ip: 10.48.3.84
+              osname: JunOS
+          fv-tags: dut:fips
+          make: juniper
+          model: mx480
+          name: torch
+          osname: JunOS
+
+.PP
+.B "3.) The 'run_macro' CLI tool"
+.fi
+In addition to the Toby integrated workflows as described above, there is also a command line version of the Macro Engine that does not require Robot.  It will use the Toby lower level device control libraries to interact with the devices and bypass Robot altogether.  This is particularly useful when dealing with a framework other than Toby.  Or, if some macros need to be run prior to script execution, this is a good option.
+Run 'run_macro --help' for more information about the supported parameters.
+.nf
+
+Macro Engine CLI Example:
+jdoe$> run_macro --resources=rn_server1 --macro=bgp --macro_lib=./bgp_macro.yaml --variables broadcom_fpcs=fpc1,fpc2:intf_desc_level=terse:r0__name=rn_server1 
+
+.SH RESULTS
+Once a macro has been run, either through Toby at test failure time or via the CLI, the results from the commands are written to the log folders.  When executed within Toby (either via the fv-macro know or 'Run Macro on Failure'), the results will go into a subfolder in the Toby log folder called 'debug_logs'.  If the results are being viewed via the html page, then there will be a 'Debug Logs' link.
+.br
+In short, the folder structure will look like this...
+[Toby log folder]/debug_logs/[time of failure]/[resource name]/
+.br
+Since there can be multiple failures in a test suite, it is possible to get multiple [time of failure] folders.  Also, there may be multiple resources in your topology, so it is possible to get more than one [resource name] folder.  Within these folders are various logs.  The master result log is a high level account of each command that was called with any errors that were encountered, but it does NOT contain the command results. The master log is located here...
+.nf
+
+[Toby log folder]/debug_logs/[time of failure]/result.log
+
+Example result.log contents...
+  2018-10-08 16:08:34,548 INFO Processing macros...
+  2018-10-08 16:08:34,548 INFO Processing macro bgp...
+  2018-10-08 16:08:34,555 INFO Processing macro:bgp,resource:r0(bunker)
+  2018-10-08 16:08:34,555 INFO Completed macro:bgp,resource:r0
+  2018-10-08 16:08:34,556 INFO Completed macro bgp
+  2018-10-08 16:08:34,556 INFO Processing macro vty_trio...
+  2018-10-08 16:08:34,561 INFO Processing macro:vty_trio,resource:r0(bunker)
+
+The individual resource logs contain all of the output from the various commands. Those logs are located here...
+
+[Toby log folder]/debug_logs/[time of failure]/[resource name]/[resource_name]_result.log
+(including the resource name in the log name helps if the log gets distributed via email, scp, etc.)
+
+.fi
+Showing an example of the results log would take up a lot of this manual so it is not included here.
+
+.SH SEE ALSO
+toby, t, config engine, verification engine, monitoring engine
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Justin Hayes (jhayes@juniper.net)

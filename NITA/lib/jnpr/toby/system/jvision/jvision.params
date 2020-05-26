@@ -1,0 +1,44 @@
+x-test-topology "             
+                              |    |_____|    |
+                          --- | R0 |_____| H0 |---
+                              |    |     |    |
+";
+
+h0 {
+   SYSTEM {
+        make  "iXSystems";
+        name  "jvision-ubuntu3";
+
+   }
+   INTERFACES {
+        intf1 {
+              link "connect1";
+        }
+   }
+}
+
+#H0 {
+#   SYSTEM {
+#	make "lab-trolls";
+#	name "cd-st-lnxserver-01";
+#   }
+#   INTERFACES {
+#        intf2 {
+#              link "connect1";
+#        }
+#   }
+#}
+
+uv-dut-intf-ip "120.1.1.1/24";
+uv-collector-ip "120.1.1.180";
+
+uv-jv-dut-ip "famous";
+uv-jv-collector-ip "120.1.1.180";
+uv-jv-filter "";
+uv-jv-path "/interfaces/,/components/";
+uv-jv-frequency 2000;
+uv-jv-server "jvision-ubuntu3";
+
+#uv-collector-port "5001";
+#uv-traffic-interval "5";
+#uv-queue-interval "1000";

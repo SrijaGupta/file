@@ -1,0 +1,56 @@
+.\" Manpage for Toby pause/pause_on_failure feature
+.\" Contact selvat@juniper.net to correct errors or typos
+.TH man 1 "12 Jun 2019"
+.SH FEATURE
+Pause and Pause on Failure Feature
+.SH SYNOPSIS
+The Toby Pause & Pause on Failure feature allows users to debug toby script at time of failure while developing toby script
+.SH DESCRIPTION
+This page documents the Toby Pause & Pause on failure feature. This feature allows users to pause the script whenever the failure occurs and run various device commands on a given device at the time of failure to cross check whether the device is responding in a expected way or not.  This is particularly useful because it can be difficult and time consuming for engineers to try and reproduce a given issue.
+.SH DEFINING PAUSE
+The first step in using the pause feature is to create a yaml file to set the breakpoints at various point of failure.
+
+.nf
+.B "sample_pause_file.yaml [START]"
+
+#(copy and paste from as needed)
+# Note that even with all of the comments in this file, it is possible to copy and paste the below content and edit as needed
+
+testcases:
+     before:
+         - Testcase02
+         - ANY
+     after:
+         - Testcase01
+     fail:
+         - Testcase01
+         - any
+keywords:
+     before:
+         - Keyword01
+     after:
+         - Keyword02
+         - any
+     error:
+         - any
+     fail:
+         - Keyword01
+         - any
+
+# This generic example shows a constraint where the script has to pause
+.PP
+.B "PAUSE USAGE"
+       toby -p topology.yaml --pause sample_pause_file.yaml test.robot
+
+.SH DEFINING PAUSE ON FAILURE
+This is similar to pause feature. But user don't want to pass any yaml file. Due to that user cannot set any conditional pause. Still it would be useful to pause at any point of failure while executing a toby script during development.
+.PP
+.B "PAUSE ON FAILURE USAGE"
+       toby -p topology.yaml --pause_on_failure test.robot
+
+.SH SEE ALSO
+toby, t, config engine, verification engine, monitoring engine
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Selvarajan Thanabal (selvat@juniper.net)

@@ -1,0 +1,109 @@
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/17.4D0/junos">
+    <multi-routing-engine-results>
+ 
+        <multi-routing-engine-item>
+ 
+            <re-name>member0</re-name>
+ 
+            <fpc-information xmlns="http://xml.juniper.net/junos/17.4D0/junos-chassis" junos:style="brief">
+                <fpc>
+                    <slot>0</slot>
+                    <state>Online</state>
+                    <temperature junos:celsius="37">37</temperature>
+                    <cpu-total>20</cpu-total>
+                    <cpu-interrupt>0</cpu-interrupt>
+                    <cpu-1min-avg>20</cpu-1min-avg>
+                    <cpu-5min-avg>21</cpu-5min-avg>
+                    <cpu-15min-avg>21</cpu-15min-avg>
+                    <memory-dram-size>2048</memory-dram-size>
+                    <memory-heap-utilization>15</memory-heap-utilization>
+                    <memory-buffer-utilization>19</memory-buffer-utilization>
+                </fpc>
+                <fpc>
+                    <slot>1</slot>
+                    <state>Online</state>
+                    <temperature junos:celsius="37">37</temperature>
+                    <cpu-total>11</cpu-total>
+                    <cpu-interrupt>0</cpu-interrupt>
+                    <cpu-1min-avg>15</cpu-1min-avg>
+                    <cpu-5min-avg>14</cpu-5min-avg>
+                    <cpu-15min-avg>14</cpu-15min-avg>
+                    <memory-dram-size>2048</memory-dram-size>
+                    <memory-heap-utilization>12</memory-heap-utilization>
+                    <memory-buffer-utilization>22</memory-buffer-utilization>
+                </fpc>
+                <fpc>
+                    <slot>2</slot>
+                    <state>Empty</state>
+                </fpc>
+                <fpc>
+                    <slot>3</slot>
+                    <state>Online</state>
+                    <temperature junos:celsius="34">34</temperature>
+                    <cpu-total>15</cpu-total>
+                    <cpu-interrupt>0</cpu-interrupt>
+                    <cpu-1min-avg>17</cpu-1min-avg>
+                    <cpu-5min-avg>16</cpu-5min-avg>
+                    <cpu-15min-avg>16</cpu-15min-avg>
+                    <memory-dram-size>2048</memory-dram-size>
+                    <memory-heap-utilization>12</memory-heap-utilization>
+                    <memory-buffer-utilization>21</memory-buffer-utilization>
+                </fpc>
+                <fpc>
+                    <slot>4</slot>
+                    <state>Empty</state>
+                </fpc>
+                <fpc>
+                    <slot>5</slot>
+                    <state>Empty</state>
+                </fpc>
+            </fpc-information>
+        </multi-routing-engine-item>
+ 
+        <multi-routing-engine-item>
+ 
+            <re-name>member1</re-name>
+ 
+            <fpc-information xmlns="http://xml.juniper.net/junos/17.4D0/junos-chassis" junos:style="brief">
+                <fpc>
+                    <slot>0</slot>
+                    <state>Empty</state>
+                </fpc>
+                <fpc>
+                    <slot>1</slot>
+                    <state>Empty</state>
+                </fpc>
+                <fpc>
+                    <slot>2</slot>
+                    <state>Online</state>
+                    <temperature junos:celsius="47">47</temperature>
+                    <cpu-total>20</cpu-total>
+                    <cpu-interrupt>0</cpu-interrupt>
+                    <cpu-1min-avg>20</cpu-1min-avg>
+                    <cpu-5min-avg>21</cpu-5min-avg>
+                    <cpu-15min-avg>20</cpu-15min-avg>
+                    <memory-dram-size>2048</memory-dram-size>
+                    <memory-heap-utilization>15</memory-heap-utilization>
+                    <memory-buffer-utilization>19</memory-buffer-utilization>
+                </fpc>
+                <fpc>
+                    <slot>3</slot>      
+                    <state>Empty</state>
+                </fpc>
+                <fpc>
+                    <slot>4</slot>
+                    <state>Offline</state>
+                    <comment></comment>
+                </fpc>
+                <fpc>
+                    <slot>5</slot>
+                    <state>Empty</state>
+                </fpc>
+            </fpc-information>
+        </multi-routing-engine-item>
+ 
+    </multi-routing-engine-results>
+    <cli>
+        <banner>{master:member0-re0}</banner>
+    </cli>
+</rpc-reply>

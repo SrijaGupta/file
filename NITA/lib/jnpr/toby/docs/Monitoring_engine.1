@@ -1,0 +1,389 @@
+.\" Manpage for Toby Monitoring Engine
+.\" Contact aburri@juniper.net to correct errors or typos
+.TH man 1 "02 Feb 2020" "1.0" "Toby Monitoring Engine"
+.SH NAME
+Toby Monitoring Engine
+.SH SYNOPSIS
+The Toby Monitoring Engine  is activated via a Toby framework variable.
+.SH DESCRIPTION
+This page documents the Toby Monitoring Engine.  Monitor engine will start monitoring the Devices.
+.SH DEFINING MONITORING
+Monitoring Engine is activated via a Toby framework variable. Set 'fv-monitoring-engine' in your params file which translate to an equivalent setting in your Toby topology yaml file.
+Note that the mandatory Toby suite setup and toby suite teardown keywords must be included in your robot file for Monitoring Engine to be activated and deactivated properly.
+Here is an example
+.nf
+.B "params_Monitoring.params [START]"
+.B  ACTIVATE MONITORING:
+
+Params file:
+
+   fv-monitoring-engine "enable";
+
+Toby Topology YAML file:
+
+    t: 
+      framework_variables: 
+            fv-monitoring-engine: enable
+
+Robot file:
+
+    Suite Setup       Toby Suite Setup
+    Suite Teardown    Toby Suite Teardown
+
+Graphs created by default
+
+.SH EXCLUDE A RESOURCE FROM MONITORING
+A resource can be excluded from monitoring via a framework variable tag.
+Set 'fv-tags' in your params file for the resource to be excluded which translates to an equivalent setting in your Toby Topology YAML file.
+The tag "NOMON" is recognized by Monitoring Engine and indicates that no monitoring should be enabled for this resource.
+The tags "NOMONREPFE" and "NOMONSYSLOG" are also supported to turn off RE/PFE and syslog monitoring respectively.  These are both turned on by default when Monitoring Engine is activated.
+
+Here is an example
+
+Params file:
+
+    r0 {
+      system {
+          fv-tags "NOMON";
+       }
+    }
+
+Toby Topology YAML file:
+
+    t:
+     resources:
+       r0:
+         system:
+           primary:
+             fv-tags: NOMON
+
+For each resource four graphs are created:
+     RE memory
+     RE CPU
+     PFE memory
+     PFE CPU
+
+Do not create graphs for a resource
+
+Graph creation can be skipped for a resource via a framework variable tag.
+Set 'fv-tags' in your params file for the resource to be skipped which translates to an equivalent setting in your Toby Topology YAML file.
+The tag "NOGRAPH" is recognized by Monitoring Engine and indicates that no graphs should be created for this resource.
+
+Params file:
+
+    r0 {
+      system {
+          fv-tags "NOGRAPH";
+       }
+    }
+
+Toby Topology YAML file:
+
+    t:
+     resources:
+       r0:
+         system:
+           primary:
+             fv-tags: NOGRAPH
+
+.SH SET THE MONITORING INTERVAL
+
+The data collection interval within Monitoring Engine is set via the same Toby framework variable used for activation.
+Set the following in your params file which translates to an equivalent setting in your Toby Topology YAML file.
+This will change the data collection interval from its default value of 5 sec to the user specified setting.
+
+Params file:
+
+    fv-monitoring-engine "interval=1";
+
+Toby Topology YAML file:
+
+    t: 
+      framework_variables: 
+        fv-monitoring-engine: interval=1
+
+.SH SET THE MONITORING LOG LEVEL
+
+The log level for Monitoring Engine threads is set via the same Toby framework variable used for activation.
+Set the following in your params file which translates to an equivalent setting in your Toby Topology YAML file.
+This will change the log level from its default value of 'ERROR' to the user specified setting (i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET).
+If log_level is set to 'OFF' then Monitoring Engine will disable all logging for the Monitoring Engine threads.  This is useful for large topologies to avoid reaching the OS limit for the maximum number of open files.
+
+Params file:
+
+    fv-monitoring-engine "interval=1:log_level=INFO";
+
+Toby Topology YAML file:
+
+    t: 
+      framework_variables: 
+        fv-monitoring-engine: interval=1:log_level=INFO
+
+.SH MONITOR JUNOS PROCESSES
+
+To monitor JUNOS processes you must specify these in YAML format.  The YAML file containing this information must be specified in the Toby Monitoring Engine framework variable.
+Set 'fv-monitoring-engine'  in your params file which translates to an equivalent setting in your Toby Topology YAML file.
+The content contained within the monitor.yaml file will enable JUNOS process monitoring within Monitoring Engine for the specified processes.  The processes specified must match the output from the command "show system processes extensive" exactly.
+
+Params file:
+
+    fv-monitoring-engine "interval=1:log_level=INFO:infile=monitor.yaml";
+
+Toby Topology YAML file:
+
+    t: 
+      framework_variables: 
+        fv-monitoring-engine: interval=1:log_level=INFO:infile=monitor.yaml
+
+Sample "monitor.yaml" file:
+
+r0:
+    processes: ['rpd{rpd}', 'rpd{bgpio-0-th}', 'rpd{rsvp-io}', 'rpd{krtio-th}', 'rpd{TraceThread}', mib2d, agentd, bfdd, ppmd, pfed]
+
+.SH MONITOR CUSTOM DATA(TEXT, XML, JSON)
+
+Custom data monitoring enables monitoring for any numerical data within the output of any JUNOS command in any format (text, XML, JSON).  Commands can be executed on any system node/controller in any mode (cli, shell, root, fpc1, fpc2, etc).
+Custom data consists of graphs, traces and parameters.  A graph is a set of traces and parameters that are contained within a single graph.  A trace is a reference name given to all data collected from a single command.  A parameter is a reference name given to each data item to be monitored within the output of a trace.  All are defined in the monitor.yaml file.
+
+Each graph must contain one or more traces
+Each trace must contain a command and one or more parameters
+Format is optional with 'text' as the default (text, xml, json)
+Mode is optional with 'cli' as the default (cli, shell, root, fpc1, fpc2, etc)
+Node/Controller are optional
+If format = 'text' then each parameter must include a regexp and a group
+If format = 'xml' then each parameter must include an xpath
+If format = 'json' then each parameter must include a jsonpath
+
+# text format
+r4:
+  custom_data:
+    - graph0:
+      - trace0:
+          command: 'show chassis fpc member 0'
+          format: text
+          mode: cli
+          node: primary
+          controller: re0
+          parameters:
+            - member0_fpc3_cpu_total:
+                regexp: 3\s+Online\s+\d+\s+(\d+)
+                group: 1
+            - member0_fpc3_heap:
+                regexp: 3\s+Online\s+\d+\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)
+                group: 2
+
+# xml format
+r4:
+  custom_data:
+    - graph1:
+      - trace1:
+          command: 'show chassis fpc member 1'
+          format: xml
+          mode: cli
+          node: member1
+          controller: re1
+          parameters:
+            - member1_fpc2_cpu_total:
+                xpath: multi-routing-engine-item[re-name="member1"]/fpc-information/fpc[slot="2"]/cpu-total
+            - member1_fpc2_heap:
+                xpath: multi-routing-engine-item[re-name="member1"]/fpc-information/fpc[slot="2"]/memory-heap-utilization
+
+# json format
+r4:
+  custom_data:
+    - graph2:
+      - trace2:
+          command: 'show chassis fpc member 0'
+          format: json
+          mode: cli
+          node: primary
+          controller: re1
+          parameters:
+            - member0_fpc3_cpu_total:
+                jsonpath: multi-routing-engine-results[0].multi-routing-engine-item[0].fpc-information[0].fpc[3].cpu-total[0].data
+            - member0_fpc3_heap:
+                jsonpath: multi-routing-engine-results[0].multi-routing-engine-item[0].fpc-information[0].fpc[3].memory-heap-utilization[0].data
+
+.SHAccessing metadata
+Keywords are available within Monitoring Engine for accessing RE and PFE Memory and CPU metadata (i.e. min/max/ave).  The scope of these keywords is all the data collected within the current testcase.  Note that resource and fru are optional parameters with their default values being "all".
+
+Robot file:
+
+    # resource and fru are optional, default is all
+    Monitoring Engine Get Pfe Memory Minimum    resource=r0    fru=fpc0
+    Monitoring Engine Get Pfe Memory Maximum    resource=r0    fru=fpc0
+    Monitoring Engine Get Pfe Memory Average    resource=r0    fru=fpc0
+    Monitoring Engine Get Pfe Cpu Minimum    resource=r0    fru=fpc0
+    Monitoring Engine Get Pfe Cpu Maximum    resource=r0    fru=fpc0
+    Monitoring Engine Get Pfe Cpu Average    resource=r0    fru=fpc0
+    Monitoring Engine Get Re Memory Minimum    resource=r0    fru=re0
+    Monitoring Engine Get Re Memory Maximum    resource=r0    fru=re0
+    Monitoring Engine Get Re Memory Average    resource=r0    fru=re0
+    Monitoring Engine Get Re Cpu Minimum    resource=r0    fru=re0
+    Monitoring Engine Get Re Cpu Maximum    resource=r0    fru=re0
+    Monitoring Engine Get Re Cpu Average    resource=r0    fru=re0
+
+Keywords are available within Monitoring Engine for accessing RE Process Memory and CPU metadata (i.e. min/max/ave). The scope of these keywords is all the data collected within the current testcase.  Note that resource and fru are optional parameters with their default values being "all".
+
+Robot file:
+
+    # resource and fru are optional, default is all
+    Monitoring Engine Get Re Process Memory Minimum    process=rpd    resource=r0    fru=re0
+    Monitoring Engine Get Re Process Memory Maximum    process=rpd    resource=r0    fru=re0
+    Monitoring Engine Get Re Process Memory Average    process=rpd    resource=r0    fru=re0
+    Monitoring Engine Get Re Process Cpu Minimum    process=rpd    resource=r0    fru=re0
+    Monitoring Engine Get Re Process Cpu Maximum    process=rpd    resource=r0    fru=re0
+    Monitoring Engine Get Re Process Cpu Average    process=rpd    resource=r0    fru=re0
+
+.SHUsing metadata within toby testcase logic
+
+Here is an example of accessing Monitoring Engine metadata and using it within a Toby testcase to determine pass/fail.  In this example, the maximum PFE memory collected for resource r0, fpc0 during Testcase 1 is stored in a variable, and then this value is compared to the user defined threshold of 95.  If the value is greater than the threshold, the "Fail" keyword is executed which has the effect of failing the testcase.
+
+*** Settings ***
+Resource          jnpr/toby/Master.robot
+Suite Setup       Toby Suite Setup
+Suite Teardown    Toby Suite Teardown
+
+*** Test Cases ***
+Testcase 1 - Monitoring Engine Check Threshold
+     #some testcase processing
+     ${value}    Monitoring Engine Get Pfe Memory Maximum
+     resource=r0    fru=fpc0
+     Run Keyword If    ${value}>95    Fail    msg="Maximum PFE memory utilization for resource r0 fru fpc0 is greater than 95%"
+
+.SHData alert logging
+Monitoring Engine allows the user to define data alert logging thresholds for data collected. The robot log is updated with an alert when data reaches 80% of the defined alert thresholds.
+RE/PFE CPU/memory alerts are logged for levels of 80% or above.
+[ALERT:PFE:CPU]: 2017-10-24 13:15:41.771463 PFE CPU utilization is 100% on haris fpc0
+The user can set memory and CPU alert thresholds for any managed process.
+
+r0:
+  processes:
+    - rpd:
+        alert:
+          mem: '2000000000'
+          cpu: '80'
+
+.SHSyslog alert logging
+Monitoring Engine automatically checks syslog for the following default error strings:
+1) JTASK_SCHED_SLIP
+2) jlock hog
+3) WEDGE DETECTED
+4) xtxn error
+5) Error PPE
+6) cmerror
+
+Also the user can define custom error strings.  If any of the default or user defined error strings are detected, the robot log is updated with a syslog alert.
+
+r0:
+  syslog:
+    - 'detect this message'
+    - kill
+    - jlock
+    - WEDGE
+    - xtxn
+
+.SHAccessing syslog alerts
+A keyword is available within Monitoring Engine for accessing RE Syslog Alerts. The scope of this keyword is all the syslog entries detected within the current testcase.  Note that resource is an optional parameter with the default value being "all".
+
+    Robot file:
+
+        # resource is optional, default is all
+        Monitoring Engine Get Syslog Alerts    resource=r0
+
+.SHMONITOR USER DEFINED STRUCTURED DATA (XML):
+
+User defined structured data monitoring enables monitoring for any numerical XML data within the output of any JUNOS show command.
+User defined structured data consists of graphs and traces.  A graph is a set of traces that are contained within a single graph.  A trace is a reference name given to each data item to be monitored.  Both are defined in the monitor.yaml file.
+
+Each graph must contain one or more traces
+Each trace must contain a command and an xpath to the desired XML output
+
+sample "monitor.yaml" file:
+
+     r0:
+       data:
+         - graph1:
+           - trace1:
+               cmd: 'show chassis fpc'
+               xpath: 'fpc[slot="0"]/cpu-total'
+           - trace2:
+               cmd: 'show chassis fpc'
+               xpath: 'fpc[slot="0"]/cpu-total'
+         - graph2:
+           - trace1:
+              cmd: 'show interfaces'
+              xpath: 'physical-interfaces[name="fxp0"]/traffic-statistics/input-packets'
+           - trace2:
+              cmd: 'show interfaces'
+              xpath: 'physical-interfaces[name="fxp0"]/traffic-statistics/output-packets'
+
+.SH MONITOR USER DEFINED UNSTRUCTURED DATA (TEXT):
+
+User defined unstructured data monitoring enables monitoring for any numerical text data within the output of any JUNOS command executed in any of the following modes:
+"cli", "shell","root","fpc1", "fpc12", etc
+
+User defined unstructured data consists of graphs, traces and parameters.  A graph is a set of traces and parameters that are contained within a single graph.  A trace is a reference name given to all data collected from a single command.  A parameter is a reference name given to each data item to be monitored within the output of a trace.  All are defined in the monitor.yaml file.
+
+Each graph must contain one or more traces
+Each trace must contain a command and one or more parameters
+Trace mode is optional with "cli" as the default
+Each parameter must contain a regexp group number to match and a label for the graph
+Regexp can be defined at the trace level to be applied to all parameters or at the parameter level (latter shown below) 
+
+r0:
+  unstructured_data:
+    - egress:  # graph name
+       - trace1:  # trace name
+           cmd: 'show shim jnh memory dev 0 usage egress'
+           mode: 'fpc0‘
+           parameters:
+            - block_0_available:  # parameter name
+                regexp: 'block 0.*?used\W+(\d+)'
+                group: 1
+                label: 'fpc0-egress-block-0-bytes-available'
+            - block_1_available:
+                regexp: 'block 1.*?used\W+(\d+)'
+                group: 1
+                label: 'fpc0-egress-block-1-bytes-available'
+            - block_2_available:
+                regexp: 'block 2.*?used\W+(\d+)'
+                group: 1
+                label: 'fpc0-egress-block-2-bytes-available'
+            - block_3_available:
+                regexp: 'block 3.*?used\W+(\d+)'
+                group: 1
+                label: 'fpc0-egress-block-3-bytes-available'
+
+Example with regexp defined at the trace level to be applied to all parameters
+
+r0:
+  unstructured_data:
+    - nexthop:  # graph name
+      - trace1:  # trace name
+        cmd: 'show shim jnh memory dev 0 usage nexthop'
+        regexp: 'block 0.*?used\W+(\d+).*?block 1.*?used\W+(\d+).*?block 2.*?used\W+(\d+).*?block 3.*?used\W+(\d+)'
+        mode: 'fpc0'
+        parameters:
+          - block_0_available:  # parameter name
+             group: 1
+             label: 'fpc0-nexthop-block-0-bytes-available'
+          - block_1_available:
+             group: 2
+             label: 'fpc0-nexthop-block-1-bytes-available'
+          - block_2_available:
+             group: 3
+             label: 'fpc0-nexthop-block-2-bytes-available'
+          - block_3_available:
+             group: 4
+             label: 'fpc0-nexthop-block-3-bytes-available'
+
+
+.fi
+
+.SH SEE ALSO
+toby, t, config engine, verification engine, macro engine
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Akhil kumar burri (aburri@juniper)

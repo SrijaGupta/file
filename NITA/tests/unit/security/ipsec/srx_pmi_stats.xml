@@ -1,0 +1,1 @@
+<flow-pmi-statistics xmlns="http://xml.juniper.net/junos/20.1I0/junos-flow"><pmi-spu-id>of FPC0 PIC0:</pmi-spu-id><pmi-rx>0</pmi-rx><pmi-tx>0</pmi-tx><pmi-rfp>0</pmi-rfp><pmi-drop>0</pmi-drop><pmi-encap-bytes>1400</pmi-encap-bytes><pmi-decap-bytes>1400</pmi-decap-bytes><pmi-encap-pkts>20</pmi-encap-pkts><pmi-decap-pkts>20</pmi-decap-pkts></flow-pmi-statistics>

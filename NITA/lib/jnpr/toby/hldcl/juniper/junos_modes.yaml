@@ -1,0 +1,61 @@
+shell:
+  dest_modes:
+    cli:
+      - prompt(> )
+      - shell(cli)
+      - prompt(Toby-${pid}-var[host]>)
+      - cli(set cli prompt Toby-${pid}-var[host]>)
+      - cli(set cli screen-width 0)
+      - cli(set cli screen-length 0)
+    vty:
+      - prompt(vty\)#\s|vty.[a-zA-Z0-9]*# |fpc[a-zA-Z0-9:]*> |:pfe> )
+      - shell(var[vty_cmd])
+    cty:
+      - prompt(uart0\)#\s|uart0.# |login:\s|localhost:~#\s|fpc[a-zA-Z0-9].*#\s)
+      - shell(var[cty_cmd])
+      - shell(root)
+    cli-pfe:
+      - prompt(> )
+      - shell(cli-pfe)
+      - prompt(Toby-${pid}-var[host]>)
+      - cli-pfe(set cli prompt Toby-${pid}-var[host]>)
+      - cli-pfe(set cli screen-width 0)
+      - cli-pfe(set cli screen-length 0)
+
+cli:
+  dest_modes:
+    shell:
+      - prompt(Toby-${pid}-var[host]%)
+      - cli(exit)
+    config:
+      - prompt(Toby-${pid}-var[host]#)
+      - cli(configure var[config_mode])
+
+config:
+  dest_modes:
+    cli:
+      - prompt(Toby-${pid}-var[host]>)
+      - config(exit configuration-mode)
+  config:
+      - prompt(Toby-${pid}-var[host]>)
+      - config(exit configuration-mode)
+      - prompt(Toby-${pid}-var[host]#)
+      - cli(configure var[config_mode])
+
+cty:
+  dest_modes:
+    shell:
+      - prompt(Toby-${pid}-var[host]%)
+      - cty(\x03)
+
+vty:
+  dest_modes:
+    shell:
+      - prompt(Toby-${pid}-var[host]%)
+      - vty(exit)
+
+cli-pfe:
+  dest_modes:
+    shell:
+      - prompt(Toby-${pid}-var[host]%)
+      - cli-pfe(exit)

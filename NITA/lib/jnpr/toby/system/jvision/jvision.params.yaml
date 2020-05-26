@@ -1,0 +1,42 @@
+--- 
+jaas: 
+  params: /homes/wtang/toby/lib/jnpr/toby/system/jvision/jvision.params
+  plite: /homes/wtang/toby/lib/jnpr/toby/system/jvision/jvision.params.plite
+t: 
+  resources: 
+    h0: 
+      interfaces: 
+        intf1: 
+          link: connect1
+          management: 0
+          name: eth2
+          pic: eth2
+          type: []
+
+      system: 
+        primary: 
+          controllers: 
+            unknown: 
+              con-ip: 10.92.238.71
+              domain: englab.juniper.net
+              hostname: jvision-ubuntu3-n
+              isoaddr: 47.0005.80ff.f800.0000.0108.0001.0102.5500.9154.00
+              loop-ip: 10.255.9.154
+              loop-ipv6: abcd::10:255:9:154
+              mgt-intf-name: eth0
+              mgt-ip: 10.92.238.70
+              mgt-ipv6: abcd::10:92:238:70
+              osname: linux
+          make: iXSystems
+          model: ixr1104s-150528
+          name: jvision-ubuntu3
+          osname: linux
+  user_variables: 
+    uv-collector-ip: 120.1.1.180
+    uv-dut-intf-ip: 120.1.1.1/24
+    uv-jv-collector-ip: 120.1.1.180
+    uv-jv-dut-ip: famous
+    uv-jv-filter: ''
+    uv-jv-frequency: 2000
+    uv-jv-path: /interfaces/,/components/
+    uv-jv-server: jvision-ubuntu3

@@ -1,0 +1,148 @@
+#export TOBY_LOG_FOLDER="$HOME/run_script_log"
+#export TE_TOPOLOGY=cnrd-lab:cnrd-nat:sbumisc:misc:ALGQA:infraqa:my_rsg:Infra-LTE:lab-trolls
+#export PARAMS_MACHINES=utm-srx5600-b:vsrx-utm-vmpc25:E17-17:algsip-c4:cnrd2k802:utm-wf01
+#plinker -l utm-srx5600-b xe-5/0/0 vsrx-utm-vmpc25 eth1
+
+x-test-topology "
+
+                      +----------------+
+                      + h2 (Internet)  +
+                      +----------------+
+                           |
+                           |
+   FTPdown Client       +-----+
+   +-----------+        |     |           +--------------+
+   | h0(Client)+--------+ R1  +-----------+  h1 (Server) +
+   +-----------+        |     |           +--------------+
+                        +-----+
+                     " ;
+
+# See Test Plan documentation for explanation of test case fields.
+
+
+r0 {
+        #x-dut 1;
+        #x-jsr-secure 1;
+      #  uv-connect-mtd "ssh";
+        fv-user "root";
+        fv-password "Embe1mpls";
+        system {
+                #model (or "srx340" "srx550m" "vsrx2" "srx320" "srx345" "srx1500" "srx5400" "srx1500" "srx3400" "srx5600" "srx1400" "srx650");
+                make (or "juniper" "dell");
+        }
+        interfaces {
+
+                    r0h0 {
+                         link    "link1";
+                         #uv-ip-addr "13.0.0.254";
+                         #uv-ipv6-addr "2013::254";
+                    }
+                    r0h1{
+                          link    "link2";
+                          #uv-ip-addr "14.0.0.254";
+                          #uv-ipv6-addr "2014::254";
+                    }
+                    R0_INTERNET {
+                          type "internet";
+                    }
+        }
+}
+
+h0 {
+    #x-no-os-get-version 1;
+    fv-user "root";
+    fv-password "Embe1mpls";
+   # uv-connect-mtd "ssh";
+    #x-my-alias "controller";
+    system {
+      #model (or "poweredge R820" "proliant dl380 g7" "centos" "ubuntu" "linux" "VM");
+      make (or "lab-trolls" "labtrolls" "hp" "dell");
+      name  "argon-smtps-vm20";
+    }
+    interfaces {
+        h0r0 {
+             link    "link1";
+             #uv-ip-addr "13.0.0.1";
+             #uv-ipv6-addr "2013::1";
+         }
+     }
+}
+
+h1 {
+    #x-no-os-get-version 1;
+    fv-user "root";
+    fv-password "Embe1mpls";
+    #uv-connect-mtd "ssh";
+    #x-my-alias "controller";
+    system {
+      #model (or "centos" "ubuntu" "poweredge R820" "proliant dl380 g7" "linux" "VM" "lnux");
+      make (or "lab-trolls" "labtrolls" "hp" "dell");
+      name  "argon-smtps-vm21";
+    }
+    interfaces {
+        h1r0 {
+             link    "link2";
+     #        uv-ip-addr "14.0.0.1/8";
+     #       uv-ipv6-addr "2014::1";
+          }
+       }
+}
+uv-ipv4-mask                "8";
+uv-ipv6-mask                "64";
+uv-r0h0-ipv4-ipaddr         "13.0.0.254";
+uv-r0h1-ipv4-ipaddr         "14.0.0.254";
+uv-h0r0-ipv4-ipaddr         "13.0.0.1";
+uv-h1r0-ipv4-ipaddr         "14.0.0.1";
+
+uv-r0h0-ipv6-ipaddr         "2013::254";
+uv-r0h1-ipv6-ipaddr         "2014::254";
+uv-h0r0-ipv6-ipaddr         "2013::1";
+uv-h1r0-ipv6-ipaddr         "2014::1";
+
+uv-r0h0-ipv4-network        "13.0.0.0/8";
+uv-r0h1-ipv4-network        "14.0.0.0/8";
+uv-r0h0-ipv6-network        "2013::0/64";
+uv-r0h1-ipv6-network        "2014::0/64";
+
+
+
+#uv-all-mask                 "0"; this is for inernet connection
+############################################################################################RAMETERS#########################################################
+#uv_protocol                "http";
+#####################File PARAMETERS########################################################
+#uv-shell-filepath                    "/volume/argon/argon_traffic_files/test/"; this one is move to python code
+uv-default-profile                   "default_profile";  #this is default profile
+
+#####################HTTP AND SSL SERVER FILE PATH AND NAME#################################
+uv-cacert-file                       "/root/cacert.pem"; #This is for ssl_fp
+uv-smtp-server-cert-file             "/root/utm-pc143-cert.pem";
+uv-smtp-server-key-file              "/root/utm-pc143-key.pem";
+
+#uv-http-conf-file-name               "httpd.conf";  this one is moved to python code
+#uv-http-path                         "/var/www/html"; this one is moved to python code
+#uv-ssl-conf-path                     "/etc/httpd/conf.d/"; this one is moved to python code
+#uv-ssl-conf-file-name                "ssl.conf"; this one is moved to python code
+#uv-cert-path-dut                     "/var/tmp"; this one is moved to python code
+#uv-cert-path-server                  "/root/cert-appfw"; this one is moved to python code
+#uv-cert-id                           "ssl-inspect-ca";
+#uv-openssl-path                      "/usr/bin/openssl"; this one is moved to python code
+#uv-ssl-proxy-ca-key-name             "ssl_proxy_ca.key"; this one is moved to python code
+#uv-ssl-proxy-ca-crt-name             "ssl_proxy_ca.crt"; this one is moved to python code
+#uv-ssl-profile                       "ssl-inspect-profile-dut";
+#uv-smtp-sendmail-tls-file            "sendmail_tls.mc";  this one is moved to python code
+#uv-smtp-sendmail-smtps-file          "sendmail_smtps.mc";  this one is moved to python code
+
+#####################NETWORK CONF PATH AND NAME#############################################
+#uv-network-conf-path                 "/etc/sysconfig/"; this one is moved to python code
+#uv-network-conf-file-name            "network"; this one is moved to python code
+#####################SYSLOG PARAMETERS######################################################
+#uv-syslog-conf-path                  "/etc/"; this one is moved to python code
+#uv-syslog-conf-file-name             "syslog.conf"; this one is moved to python code
+#############################################################################################
+#uv-cloud-url                         "https://srxapi.dep4.argonqa.junipersecurity.net"; after bootstrap, we don't need this one
+#uv-ui-url                            "https://portal.dep4.argonqa.junipersecurity.net"; this one is moved to python code
+###############This is for India test bed###################################################
+uv-default-gw                        "30.30.30.30";
+uv-ui-tenant-name                    "srx-reg1";
+uv-ui-tenant-account                 "arout@juniper.net";
+uv-ui-tenant-pwd                     "Embe1mpls@jnpr";

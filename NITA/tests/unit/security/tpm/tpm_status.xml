@@ -1,0 +1,13 @@
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/20.1I0/junos">
+    <tpm-status>
+        <tpm-enable-status>yes</tpm-enable-status>
+        <tpm-ownership-status>yes</tpm-ownership-status>
+        <tpm-binding-key-status>created</tpm-binding-key-status>
+        <tpm-master-encryption-key-status>configured</tpm-master-encryption-key-status>
+        <tpm-family>1.2</tpm-family>
+        <tpm-firmware-version>4.43</tpm-firmware-version>
+    </tpm-status>
+    <cli>
+        <banner>{primary:node0}</banner>
+    </cli>
+</rpc-reply>

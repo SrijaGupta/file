@@ -1,0 +1,129 @@
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/15.1I0/junos">
+    <x509-pki-certificate-info-list xmlns="http://xml.juniper.net/junos/15.1I0/junos-pki">
+        <pkid-x509-certificate-information junos:style="detail">
+            <identifier>scep-root</identifier>
+            <version>3</version>
+            <serial-number-list>
+                <serial-number-x509>00000f49</serial-number-x509>
+            </serial-number-list>
+            <issuer-name>
+                <distinguished-name>
+                    <organization-name>DES</organization-name>
+                    <common-name>scep-root</common-name>
+                    <domain-component>Juniper</domain-component>
+                </distinguished-name>
+            </issuer-name>
+            <subject-name>
+                <distinguished-name>
+                    <organization-name>DES</organization-name>
+                    <common-name>scep-root</common-name>
+                    <domain-component>Juniper</domain-component>
+                </distinguished-name>
+            </subject-name>
+            <subject-string-list>
+                <subject-string>DC=Juniper, O=DES, CN=scep-root</subject-string>
+            </subject-string-list>
+            <validity>
+                <not-before>07-19-2016 18:47 UTC</not-before>
+                <not-after>07-18-2036 18:47 UTC</not-after>
+            </validity>
+            <public-key>
+                <public-key-algorithm>rsaEncryption</public-key-algorithm>
+                <public-key-length>2048</public-key-length>
+            </public-key>
+            <public-key-contents-list>
+                <key-contents>30:82:01:0a:02:82:01:01:00:be:c1:6d:5c:b3:ed:eb:1c:41:af:a8
+                    19:c4:28:b9:c8:a6:90:cc:50:3b:47:86:e7:3e:c6:ba:32:58:d4:03
+                    14:ba:ac:a6:7d:23:a4:8f:93:9a:7d:a5:00:74:e3:5d:6c:77:be:48
+                    40:9f:c2:85:43:8d:81:f1:a0:b9:ed:cf:5c:91:03:7f:85:00:c2:f4
+                    c4:c5:da:d5:62:73:63:50:71:d6:84:79:a8:ce:dd:8b:47:f7:7b:42
+                    6c:10:34:c9:3b:ad:7f:89:9e:eb:fe:04:d3:b9:47:9f:a7:70:67:61
+                    fe:3d:bd:82:51:dd:dd:ff:b9:2c:83:3b:6e:a4:c0:55:25:08:77:30
+                    e6:5c:46:6d:da:e1:9f:58:f5:40:4b:47:f6:4a:e5:a6:7c:04:c5:df
+                    19:df:43:25:f5:e2:03:a3:79:1e:c0:87:3d:9a:c9:1c:f6:ff:e2:3e
+                    64:94:54:7c:36:ee:9d:09:b7:3b:7f:5c:c0:0c:14:23:ee:c6:dc:84
+                    e4:56:34:f4:b1:55:ab:65:ee:92:a2:de:1e:6d:0f:44:f6:e1:c8:cc
+                    76:3f:d9:9b:b7:2b:4e:b7:1c:e5:bd:a1:c3:49:5f:b5:49:2e:94:45
+                    d5:4d:f6:ce:3a:8a:d0:72:5b:bd:92:d0:11:eb:ea:fc:ab:f4:23:d2
+                    b8:00:27:a5:89:02:03:01:00:01</key-contents>
+                </public-key-contents-list>
+                <signature-algorithm>sha256WithRSAEncryption</signature-algorithm>
+                <key-usage-list>
+                    <key-usage>CRL signing</key-usage>
+                    <key-usage>Certificate signing</key-usage>
+                    <key-usage>Non rupudiation</key-usage>
+                    <key-usage>Digital signature</key-usage>
+                </key-usage-list>
+                <fingerprint>
+                    <fingerprint-content>fd:5e:48:94:83:48:65:8c:93:2b:ee:2e:bd:89:74:29:04:d7:bf:38</fingerprint-content>
+                    <fingerprint-hash-algorithm>sha1</fingerprint-hash-algorithm>
+                    <fingerprint-content>a5:61:80:fe:ae:cc:3c:15:e4:23:9b:f0:8d:19:52:fe</fingerprint-content>
+                    <fingerprint-hash-algorithm>md5</fingerprint-hash-algorithm>
+                </fingerprint>
+            </pkid-x509-certificate-information>
+            <pkid-x509-certificate-information junos:style="detail">
+                <identifier>ca-advpn</identifier>
+                <version>3</version>
+                <serial-number-list>
+                    <serial-number-x509>000005d6</serial-number-x509>
+                </serial-number-list>
+                <issuer-name>
+                    <distinguished-name>
+                        <organization-name>juniper</organization-name>
+                        <common-name>root-ca</common-name>
+                        <country-name>us</country-name>
+                    </distinguished-name>
+                </issuer-name>
+                <subject-name>
+                    <distinguished-name>
+                        <organization-name>juniper</organization-name>
+                        <common-name>root-ca</common-name>
+                        <country-name>us</country-name>
+                    </distinguished-name>
+                </subject-name>
+                <subject-string-list>
+                    <subject-string>C=us, O=juniper, CN=root-ca</subject-string>
+                </subject-string-list>
+                <validity>
+                    <not-before>07-15-2016 22:13 UTC</not-before>
+                    <not-after>07-15-2066 22:13 UTC</not-after>
+                </validity>
+                <public-key>
+                    <public-key-algorithm>rsaEncryption</public-key-algorithm>
+                    <public-key-length>1024</public-key-length>
+                </public-key>
+                <public-key-contents-list>
+                    <key-contents>30:81:89:02:81:81:00:a7:fa:14:a3:fc:12:87:d9:43:0e:17:cd:61
+                        d6:3b:54:dc:23:9e:b6:fa:20:89:81:08:89:5d:84:94:4a:74:78:bb
+                        2d:f7:a9:9d:ee:b1:84:1e:80:9f:b1:fe:30:1b:2a:33:46:5e:90:a4
+                        f3:b4:95:d5:fa:86:35:1a:3c:98:3a:9f:71:f6:2e:d1:0d:ac:4e:68
+                        2e:d3:9c:d8:35:b5:42:c6:30:85:03:16:8f:9b:ea:42:a0:5c:32:cb
+                        e7:c3:0e:64:83:e7:e3:57:a9:85:9e:ed:aa:dd:f3:0f:41:0c:77:5f
+                        f5:19:4e:08:f6:a2:d1:41:ce:b4:6b:81:e3:a3:b5:02:03:01:00:01
+                    </key-contents>
+                </public-key-contents-list>
+                <signature-algorithm>sha256WithRSAEncryption</signature-algorithm>
+                <distribution-crl-list>
+                    <distribution-crl>10.155.22.189:8080/crl-as-der/currentcrl-20.crl?id=20</distribution-crl>
+                </distribution-crl-list>
+                <authority-information-access-ocsp-list>
+                    <authority-information-access-ocsp>http://10.155.22.189:8090/ca-advpn</authority-information-access-ocsp>
+                </authority-information-access-ocsp-list>
+                <key-usage-list>
+                    <key-usage>CRL signing</key-usage>
+                    <key-usage>Certificate signing</key-usage>
+                    <key-usage>Key encipherment</key-usage>
+                    <key-usage>Digital signature</key-usage>
+                </key-usage-list>
+                <fingerprint>
+                    <fingerprint-content>48:b4:7a:bc:f7:c7:e2:b4:84:67:93:9e:79:08:3f:88:96:64:be:ab</fingerprint-content>
+                    <fingerprint-hash-algorithm>sha1</fingerprint-hash-algorithm>
+                    <fingerprint-content>0c:75:e3:a5:43:0f:45:df:32:a3:cb:3b:88:4a:10:07</fingerprint-content>
+                    <fingerprint-hash-algorithm>md5</fingerprint-hash-algorithm>
+                </fingerprint>
+            </pkid-x509-certificate-information>
+        </x509-pki-certificate-info-list>
+        <cli>
+            <banner></banner>
+        </cli>
+    </rpc-reply>

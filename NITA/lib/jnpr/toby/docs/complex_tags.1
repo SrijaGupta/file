@@ -1,0 +1,73 @@
+.\" Manpage for Complex tagging logic
+.\" Contact selvat@juniper.net to correct errors or typos
+.TH man 1 "17 Jun 2019"
+.SH FEATURE
+Complex Tags
+.SH SYNOPSIS
+Complex tags within Toby provide a way to use <key>:<value> pair logic in tags
+.SH DESCRIPTION
+This page documents the Toby complex tagging logic.  Inherently, Robot provide simple tag options (--include, --exclude).  However, there are times when it is necessary to provide key:value pair based logic with strictly defined keys.  Furthermore, there are times when the values need to support more than just tag-matching and need to be able to handle greater-than/less-than logic.  And in the most complex scenario, it is necessary to know if a JUNOS release has come in a branch after the release of the image-under-test.
+.SH DEFINING Complex Tags 
+The first step in using the complex tagging logic in Toby is to add the necessary tags to the Robot file.  However, instead of...
+[TAGS]   abc   def
+... use the more complicated assignment notation ...
+[TAGS]       junos_release:19.1,18.1R2-S1
+
+Currently, Toby only supports the complex tag 'junos_release'.  Future releases should expand upon this (model, functional area, etc.)
+
+.nf
+.B "test.robot [START]"
+
+#(copy and paste from as needed)
+# Note that even with all of the comments in this file, it is possible to copy and paste the below content and edit as needed
+# -*- coding: robot -*-
+
+*** Settings ***
+Resource    jnpr/toby/Master.robot
+Suite Setup   Toby Suite Setup
+Suite Teardown   Toby Suite Teardown
+
+*** Variables ***
+
+*** Test Cases ***
+testcase1
+    [Documentation]    This is testcase1
+    [tags]       junos_release:19.1,18.1R2-S1
+    Log Console  Running testcase1
+
+testcase2
+    [Documentation]    This is testcase2
+    [tags]       junos_release:17.2r3-s9
+    Log Console  Running testcase2
+
+testcase3
+    [Documentation]    This is testcase3
+    [tags]       junos_release:17.2r4-s1,16.1
+    Log Console  Running testcase3
+
+testcase4
+    [Documentation]    This is testcase4
+    Log Console  Running testcase4
+
+testcase5
+    [Documentation]    This is testcase5
+    [tags]       junos_release:17.2r3-s2    abcd
+    Log Console  Running testcase5
+
+testcase6
+    [Documentation]    This is testcase6
+    [tags]       junos_release:17.2R3-s100
+    Log Console  Running testcase6
+
+
+.SH Passing complex tags to Toby
+Just like any other Robot tag, use the '--include|-i' argument to pass in the release of JUNOS that represents the image-under-test
+.B "Example: Target 19.2 compatible testcases only"
+       toby -p topology.yaml --include junos_release:19.2 test.robot
+
+Note that both complex and simple tags may be used together and will behave similarly to combining Robot simple tags.
+
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Justin Hayes (jhayes@juniper.net)

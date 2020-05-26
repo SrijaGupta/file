@@ -1,0 +1,522 @@
+---
+##############################################
+#
+# Toby BBE Configuration File Template
+# V0.2
+# Use http://www.yamllint.com/ to validate
+# Toby BBE development team 2016
+#
+##############################################
+#
+# Suggested usage and extensions
+#
+# Use all lower case (except comments)
+# Use four spaces indentation
+#
+# At this stage of this file developemnt, there will
+# lots of keys to be added/removed/changed by dev team.
+# Please puch to your change to Git to keep this file
+# up-to-date.
+#
+# To keep the file clean and minimal, all keys/values to be added
+# to the core of the file should be of general purpose and be reviewed.
+#
+# Scenarios and tests specific keys/values could be added
+# under special keys such as rli12345, rcca123456,
+# pr123456, cst-customer, etc. Such that they are easily
+# recognized as special purpose settings.
+#
+#################################################
+#
+# """The Zen of Python, by Tim Peters
+#
+# Beautiful is better than ugly.
+# Explicit is better than implicit.
+# Simple is better than complex.
+# Complex is better than complicated.
+# Flat is better than nested.
+# Sparse is better than dense.
+# Readability counts.
+# Special cases aren't special enough to break the rules.
+# Although practicality beats purity.
+# ..."""
+#
+#################################################
+
+bbevar:
+    test:                    # About this test suite
+        description: rli 7654321 ultra fast subscribers login    # test description string
+        type: rli            # customer | rli | rcca
+        id: 7654321          # customer name or rli number, etc.
+
+    monitor:                 # test monitoring related
+        resource-monitor-threshold: 85
+        max-cpu-settle-time: 7200
+        cpu-idle-percent: 65
+        monitor-pfe-memory: true
+
+    debug:                   # debug control
+        collect-debug-events: 0
+        pause-after-commit: 0
+        pause-after-bind: 0
+        pause-before-bind: 0
+        pause-during-traffic: 0
+        user-debug-logs:     # list: choices: junos daemon names.
+            - authd
+            - cosd
+            - jpppd
+            - jdhcpd
+        gather-detailed-stats: false        # gathering detailed stats helps with debugging, but hurts CPS performance.
+        reboot-on-test-close: false         # do not reboot when Ctrl^C is hit
+        copy-era-files: true
+        do-not-init-rt: True
+    dhcpserver:
+        ipv4:               # list
+            lease-time: 99999   # lease
+            ri: deault    # routing-instance info
+            mode: active  # local | active| passive | proxy
+        ipv6:               # list
+            lease-time: 99999   # lease
+            ri: default
+            mode: active  # local | active| passive | proxy
+            type: PD      # NA, PD, or Both
+            ndra: false   # boolean
+
+    cos:
+        configure-cos: false                # Set to 1 to run test with CoS. If this is 1, blank-profile MUST be 0.
+        static-cos: false                   # configure cos and firewall statically (no vars from Radius) if set to 1.
+        service-activation: false           # Turn on/off Service Activation at login. - not tested in a long time
+        two-level-cos-hierarchy: true       # false: max hierarchy level 2, true: use default 4 level max hierarchy
+                                            # must be set to true if scaling higher than 32k ppp clients
+        coarse-queuing: false               # This will enable port-level queuing only  (x-my-configure-cos also needs to be set to 1)
+        max-queues: 8                       # This sets the max number of queues on each ifd <96> must be 4 or 8, NEO default is 8
+
+    filters:
+        enhanced-filters: true              # Set if scaling ae > 64K ifls or non-ae > 128k ifls, or if using enhanced filters
+        configure-filters: false            # Set to 1 to run test with non-adf filters. If this is 1 or 2  blank-profile MUST be 0.
+        static-filters: false
+        ascend-data-filters: false          # New ADF module
+        log-dfwd: false                     # Set this to 1 to log dfwd. You can't set the filename for dfwd.
+        restart-unbound-before-action: 1
+        static-all: false                   # All static config, including cos and filters - no profiles - Verizon-like
+        configure-blank-profile: false      # Set to 1 to run test with a blank profile. If this is 1, CoS & filters MUST be 0
+
+    routing:                                # put it here as if used, may involve more than one routers
+        igp: none                           # can be isis ospf or none
+        bgp: false                          # whether to run BGP
+        signaling: none                     # ldp supported now, rsvp later
+        martinis: 0                         # 0 to disable, >0 creates that number of l2circuit
+                                            # Martinis start at 1000:3000 (outer:inner), so if 3000+ vlans per port are in use
+                                            # SVLANs are required
+
+    traffic:                                # traffic related
+        interval: 30                        # Duration (seconds) to send/verify traffic
+
+    resources:
+        h0:                                 # scripts uses defaults
+            interfaces:
+                radius0:
+                    link: radius0
+                    management: 0
+                    name: eth1
+                    pic: eth1
+                    type:
+                        - ether
+                        - eth
+            system:
+                primary:
+                    cube:
+                        - COMMON-LISP::OR
+                        - wf-626-systest
+                        - wf-cst
+                        - bng-626-systest
+                    controllers:
+                        if0:
+                            hostname: wf-radius08-10g
+                            mgt-intf-name: eth0
+                            mgt-ip: 10.9.0.91/21
+                            mgt-ipv6: abcd::10:9:0:91
+                            osname: linux
+                    make: lab-trolls
+                    mgt-ip: 10.9.0.91
+                    model: linux
+                    name: wf-radius08-10g
+                    osname: linux
+        r0:
+            config:                         # router configuration
+                tags:                       # list, choices: lns, dut, gres, enhanced-ip, nsr
+                    - dut
+                    - gres
+                    - enhanced-ip
+                    - nsr
+                quickcst:
+                    skip: false                 # boolean, if true, use provided configuation file
+                    config-file: /home/someone/cst-config.txt
+                vrf:
+                    base: RETAILER
+                    start: 1
+                    step: 1
+                    count: 10
+                access-model: vlandemux         # singleclient | vlandemux | multisession | demux
+                auth-vlans: false               # boolean
+                clients-per-vlan: 1
+                mac-validate: none              # loose | strict | none
+                tunnel:                         # used when r has
+                    l2tp-tunnels-count: 0               # number of l2tp tunnels to build
+                    l2tp-tunnel-mode: domainmap         # domainmap | tunnelgroup | vsa
+            interfaces:
+                access0:
+                    config:
+                        description: access interface  0    # interface description configured on router
+                        ae:
+                            bundle: ae0                         # ae interface name, none if ae is not desired
+                            active: yes                         # boolean
+                        subscribers:
+                            dhcp:
+                                - tag: dhcpscaling1
+                                  count: 16000
+                                  family: dual                       # ipv4 | ipv6 | dual
+                                  ri: default                        # routing-instance
+                                  csr: 50                            # call setup rate (interface specific)
+                                  clr: 50                            # call release rate (interface specific)
+                                  outstanding: 50                    # outstanding requests (interface specific)
+                                  maintain-subscribers: 0            # DHCP only, maintain subscribers on interface delete
+                                  vlan-encap: dsvlan                 # mandatory. vlan | svlan | dvlan | dsvlan | none
+                                  vlan:                              # optional. can be used to customize vlan
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  svlan:                             # optional. can be used to customize svlan
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  option82:                             # dhcpv4
+                                          circuit-id: agent1-aci
+                                          circuit-id-start: 100
+                                          circuit-id-step: 1
+                                          circuit-id-repeat: 1
+                                          remote-id: agent1-ari
+                                          remote-id-start: 100
+                                          remote-id-step: 1
+                                          remote-id-repeat: 1
+                                  option18:                             # dhcpv6
+                                          interface-id: agentv6-aci
+                                          interface-id-start: 100
+                                          interface-id-step: 1
+                                          interface-id-repeat: 1
+                                  option37:
+                                          remote-id: agentv6-ari
+                                          remote-id-start: 100
+                                          remote-id-step: 1
+                                          remote-id-repeat: 1
+                                  ldra:
+                                      dhcpv6RelayAgentIp: '3ffe::2:2'
+                                      dhcpv6RelayLinkAddress: '3000::'
+                                  igmp: false                       # igmp subscribers
+                                  mld: false                        # mld subscribers
+                                - tag: dhcpfunctional1
+                                  count: 10
+                                  family: dual
+                                  csr: 10                            # call setup rate (interface specific)
+                                  clr: 10                            # call release rate (interface specific)
+                                  outstanding: 10                    # outstanding requests (interface specific)
+                                  option82:                          # dhcpv4 default
+                                  option18:                          # dhcpv6 default
+                                  option37:                          # dhcpv6 default
+                                  vlan-encap: vlan                   # vlan | svlan | dvlan | dsvlan | none
+                                  vlan:
+                                  svlan:
+                                  ri: default
+                            pppoe:
+                                - tag: pppoescaling1
+                                  termination: l2tp
+                                  count: 8000
+                                  family: dual                      # ipv4 | ipv6 | dual
+                                  ri: default
+                                  l2tp: false                       # pppoe over l2tp
+                                  csr: 100                          # call setup rate (interface specific)
+                                  clr: 100                          # call release rate (interface specific)
+                                  outstanding: 100                  # outstanding requests (interface specific)
+                                  vlan-encap: dsvlan                 # vlan | svlan | dvlan | dsvlan | none
+                                  vlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  svlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  authentication: chap               # chap | pap
+                                  static-pp0: false                 # boolean, set up pp0 statically or in the dynamic profile
+                                  ppp-keepalive-interval: 120
+                                  option18:                             # dhcpv6
+                                          interface-id: aci
+                                          interface-id-start: 1
+                                          interface-id-step: 1
+                                          interface-id-repeat: 1
+                                  option37:
+                                          remote-id: ari
+                                          remote-id-start: 1
+                                          remote-id-step: 1
+                                          remote-id-repeat: 1
+                                  igmp: false                       # igmp subscribers
+                                  mld: false                        # mld subscribers
+                                - tag: pppoescaling2
+                                  count: 8000
+                                  family: ipv4                       # inet | inet6 | dual
+                                  csr: 50                            # call setup rate (interface specific)
+                                  clr: 50                            # call release rate (interface specific)
+                                  outstanding: 50                    # outstanding requests (interface specific)
+                                  ri: default
+                                  vlan-encap: dsvlan                 # vlan | svlan | dvlan | dsvlan | none
+                access1:
+                    config:
+                        description: access interface  1    # interface description configured on router
+                        ae:
+                            bundle: ae1                         # ae interface name, none if ae is not desired
+                            active: yes                         # boolean
+                        subscribers:
+                            dhcp:
+                                - tag: dhcpscaling2
+                                  count: 8000
+                                  family: ipv4                      # inet | inet6 | dual
+                                  ri: default                       # routing-instance
+                                  csr: 50                            # call setup rate (interface specific)
+                                  clr: 50                            # call release rate (interface specific)
+                                  outstanding: 50                    # outstanding requests (interface specific)
+                                  maintain-subscribers: 0           # DHCP only, maintain subscribers on interface delete
+                                  vlan-encap: dsvlan                 # vlan | svlan | dvlan | dsvlan | none
+                                  vlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  svlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  igmp: false                       # igmp subscribers
+                                  mld: false                        # mld subscribers
+                            pppoe:
+                                - tag: pppoescaling3
+                                  count: 8000
+                                  family: ipv6                      # inet | inet6 | dual
+                                  ri: default
+                                  l2tp: false                       # pppoe over l2tp
+                                  csr: 100                          # call setup rate (interface specific)
+                                  clr: 100                          # call release rate (interface specific)
+                                  outstanding: 100                  # outstanding requests (interface specific)
+                                  vlan-encap: dsvlan                 # vlan | svlan | dvlan | dsvlan | none
+                                  vlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  svlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  authentication: chap               # chap | pap
+                                  static-pp0: false                 # boolean, set up pp0 statically or in the dynamic profile
+                                  ppp-keepalive-interval: 120
+                                  igmp: false                       # igmp subscribers
+                                  mld: false                        # mld subscribers
+                                - tag: pppoescaling4
+                                  count: 8000
+                                  family: ipv4                       # inet | inet6 | dual
+                                  csr: 50                            # call setup rate (interface specific)
+                                  clr: 50                            # call release rate (interface specific)
+                                  outstanding: 50                    # outstanding requests (interface specific)
+                                  vlan-encap: dsvlan                 # vlan | svlan | dvlan | dsvlan | none
+                                  vlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  svlan:
+                                      start: 1
+                                      step: 1
+                                      repeat: 1
+                                  ri: default
+                transit0:
+                    config:
+                        ip: 20.20.20.1/24
+                        ipv6: 3000:db8:ffff:1::1/64
+                transit1:
+                    config:
+                        ip: 20.20.21.1/24
+                        ipv6: 3000:db8:ffff:2::1/64
+
+        r1:
+            config:                         # router configuration
+                tags:                       # list, choices: switch, lns, dut, gres, enhanced-ip, nsr. dual-re,
+                    - lns
+                    - gres
+                    - enhanced-ip
+                    - nsr
+                    - dual-re
+                quickcst:
+                    skip: false                 # boolean, if true, use provided configuation file
+                    config-file: /home/someone/cst-config.txt
+                vrf:
+                    base: RETAILER
+                    start: 1
+                    step: 1
+                    count: 10
+                access-model: vlandemux         # singleclient | vlandemux | multisession | demux
+                vlan-encap: dsvlan              # vlan | svlan | dvaln| dsvlan | none
+                auth-vlans: false               # boolean
+                clients-per-vlan: 1
+                mac-validate: none              # loose | strict | none
+                tunnel:                         # used when r has
+                    l2tp-tunnels-count: 0               # number of l2tp tunnels to build
+                    l2tp-tunnel-mode: domainmap         # domainmap | tunnelgroup | vsa
+            interfaces:
+                transit0:
+                    config:
+                        ip: 20.20.20.2/24
+                        ipv6: 3000:db8:ffff:1::2/64
+                    link: transit-0
+                    management: 0
+                    name: ge-5/0/0.0
+                    pic: ge-5/0/0
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                transit1:
+                    config:
+                        ip: 20.20.21.2/24
+                        ipv6: 3000:db8:ffff:2::2/64
+                    link: transit-1
+                    management: 0
+                    name: ge-5/0/1.0
+                    pic: ge-5/0/1
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                uplink0:
+                    config:
+                        ip: 200.0.1.1/24
+                        ipv6: 3000:db8:ffff:1::1/64
+                    link: uplink-0
+                    management: 0
+                    name: ge-3/0/0.0
+                    pic: ge-3/0/0
+                    type:
+                      - ge
+                      - ether
+                    unit: 0
+                uplink1:
+                    config:
+                        ip: 200.0.2.1/24
+                        ipv6: 3000:db8:ffff:2::1/64
+                    link: uplink-1
+                    management: 0
+                    name: ge-3/1/0.0
+                    pic: ge-3/1/0
+                    type:
+                      - ge
+                      - ether
+                    unit: 0
+            system:
+                primary:
+                    cube:
+                        - COMMON-LISP::OR
+                        - wf-626-systest
+                        - wf-cst
+                        - bng-626-systest
+                    domain: englab.juniper.net
+                    make: juniper
+                    mgt-ip: 10.9.41.20
+                    model: mx480
+                    name: r47mx480wf
+                    osname: JunOS
+                    controllers:
+                        re0:
+                                con-ip: 10.9.57.177
+                                hostname: r47mx480wf
+                                isoaddr: 47.0005.80ff.f800.0000.0108.0001.0100.0925.0236.00
+                                loop-ip: 10.9.250.238
+                                loop-ipv6: abcd::10:9:250:238
+                                mgt-intf-name: fxp0.0
+                                mgt-ip: 10.9.41.20/24
+                                mgt-ipv6: abcd::10:9:41:20
+                                osname: JunOS
+                        re1:
+                                con-ip: 10.9.57.178
+                                hostname: r47mx480wf1
+                                isoaddr: 47.0005.80ff.f800.0000.0108.0001.0100.0925.0235.00
+                                loop-ip: 10.9.250.239
+                                loop-ipv6: abcd::10:9:250:239
+                                mgt-intf-name: fxp0.0
+                                mgt-ip: 10.9.41.21/24
+                                mgt-ipv6: abcd::10:9:41:21
+                                osname: JunOS
+                    re_type: RE-S-1800x4
+                    scb: MX SCB
+                    x-dual-re: 1
+        rt0:
+            config:
+                ae: false      # AE on the RT.  true does legacy active/backup, false does not do AE on the RT
+            interfaces:
+                access0:
+                    link: access-0
+                    management: 0
+                    name: 9/7
+                    pic: 9/7
+                    type:
+                        - ether
+                        - ge
+                access1:
+                    link: access-1
+                    management: 0
+                    name: 9/5
+                    pic: 9/5
+                    type:
+                        - ether
+                        - ge
+                uplink0:
+                    config:                              # optional. use default if not present.
+                        vlan-id: 1                       # optional. use default 1.
+                        ip: 200.0.1.2/24                 # optional. use 200.0.0.2/24
+                        ipv6: 3000:db8:ffff:1::2/64      # optional. use 3000:db8:ffff:1::2/64
+                    link: uplink-0
+                    management: 0
+                    name: 9/2
+                    pic: 9/2
+                    type:
+                        - ether
+                        - ge
+                uplink1:
+                    config:
+                        ip: 200.0.2.2/24
+                        ipv6: 3000:db8:ffff:2::2/64
+                    link: uplink-1
+                    management: 0
+                    name: 9/1
+                    pic: 9/1
+                    type:
+                        - ether
+                        - ge
+            system:
+                primary:
+                    cube:
+                        - COMMON-LISP::OR
+                        - wf-626-systest
+                        - wf-cst
+                        - bng-626-systest
+                    controllers:
+                        if0:
+                            hostname: harpoon-ixchassis
+                            mgt-intf-name: mgt
+                            mgt-ip: 10.9.41.33/24
+                            mgt-ipv6: abcd::10:9:41:33
+                            osname: IxOS
+                    labserver: harpoon.englab.juniper.net
+                    make: ixia
+                    mgt-ip: 10.9.41.33
+                    model: xg12
+                    name: harpoon-ixchassis
+                    version: 7.50
+                    osname: IxOS
+...
+

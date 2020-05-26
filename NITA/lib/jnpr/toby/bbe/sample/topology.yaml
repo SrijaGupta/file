@@ -1,0 +1,90 @@
+---
+jaas:
+    params: /homes/ywang/sandbox/yr2016/Toby-try/Frontier.pl.params
+    plite: /homes/ywang/sandbox/yr2016/Toby-try/Frontier.pl.plite
+t:
+    resources:
+        r0:
+            interfaces:
+                access0:
+                    link: access0
+                    management: 0
+                    name: ge-1/0/0.0
+                    pic: ge-1/0/0
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                access1:
+                    link: access1
+                    management: 0
+                    name: ge-1/2/0.0
+                    pic: ge-1/2/0
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                transit0:
+                    link: transit0
+                    management: 0
+                    name: ge-1/3/0.0
+                    pic: ge-1/3/0
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                transit1:
+                    link: transit0
+                    management: 0
+                    name: ge-1/3/1.0
+                    pic: ge-1/3/1
+                    type:
+                        - ge
+                        - ether
+                    unit: 0
+                radius0:
+                    link: radius0
+                    management: 0
+                    name: xe-0/1/3.0
+                    pic: xe-0/1/3
+                    type:
+                      - xe
+                      - ether
+                    unit: 0
+            system:
+                primary:
+                    cube:
+                        - COMMON-LISP::OR
+                        - wf-626-systest
+                        - wf-cst
+                        - bng-626-systest
+                    domain: englab.juniper.net
+                    make: juniper
+                    mgt-ip: 10.9.41.19
+                    model: mx480
+                    name: r46mx480wf
+                    osname: JunOS
+                    controllers:
+                        re0:
+                                con-ip: 10.9.57.176
+                                hostname: r46mx480wf
+                                isoaddr: 47.0005.80ff.f800.0000.0108.0001.0100.0925.0237.00
+                                loop-ip: 10.9.250.237
+                                loop-ipv6: abcd::10:9:250:237
+                                mgt-intf-name: fxp0.0
+                                mgt-ip: 10.9.41.19/24
+                                mgt-ipv6: abcd::10:9:41:19
+                                osname: JunOS
+                        re1:
+                                con-ip: 10.9.57.177
+                                hostname: r46mx480wf1
+                                isoaddr: 47.0005.80ff.f800.0000.0108.0001.0100.0925.0237.00
+                                loop-ip: 10.9.250.237
+                                loop-ipv6: abcd::10:9:250:237
+                                mgt-intf-name: fxp0.0
+                                mgt-ip: 10.9.41.20/24
+                                mgt-ipv6: abcd::10:9:41:20
+                                osname: JunOS
+                    re_type: RE-S-1800x4
+                    scb: MX SCB
+

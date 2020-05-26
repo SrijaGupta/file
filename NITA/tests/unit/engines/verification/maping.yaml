@@ -1,0 +1,7 @@
+mapping_db:
+   -
+    jkey: abc
+    VE_TEMPLATE: ifd_data:parameters:mtu
+    VE_ARGS:
+             - intf: match.group(0)
+    VE_TEMPLATE_FILE: verify_jvision_ifd.yaml

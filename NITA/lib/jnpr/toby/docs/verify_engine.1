@@ -1,0 +1,1513 @@
+\" Manpage for Toby Verify Engine
+.\" Contact aburri@juniper.net to correct errors or typos
+.TH man 1 "05 Dec 2019" "1.0" "Toby Verify Engine"
+.SH NAME
+Toby Verify Engine
+.SH SYNOPSIS
+The Toby Verification Engine provides capabilities to quickly validate the topology state without the need for external scripted routines. It uses a simple and powerful template format, which is easy to read, modify and share in the framework.
+.SH DESCRIPTION
+This page documents the Toby Verify Engine. The Toby Verify Engine allows users to Verify configurations in JUNOS devices as well as traffic generators/testers. On the user front, the Verification file employs YAML structure to assemble all the pieces of verification, and provides control of verification on all devices.
+The Verification Engine communicates through the TOBY device layer via HLDCL.
+.SH DEFINING VERIFYENGINE
+The user builds a simple yaml file for the Verification Engine according to the test requirements. There are various ways to achieve the same result. Always strive for shareable, flexible, and extensible methods.
+ 
+1.  XML based Verification 
+
+2.  NON-XML based verification.
+
+3.  ADVANCE Verification
+
+.SH XML BASED VERIFICATION
+      cmd :show ospf interface ae0.1 detail | display xml
+<ospf-interface-information xmlns="http://xml.juniper.net/junos/15.1I0/junos-routing">
+   <ospf-interface>
+      <interface-name>ae0.1</interface-name>
+      <ospf-interface-state>BDR</ospf-interface-state>
+      <ospf-area>0.0.0.0</ospf-area>
+      <dr-id>2.2.2.2</dr-id>
+      <bdr-id>1.1.1.1</bdr-id>
+      <neighbor-count>1</neighbor-count>
+      <interface-type>LAN</interface-type>
+      <interface-address>10.0.1.1</interface-address>
+      <address-mask>255.255.255.0</address-mask>
+      <mtu>1500</mtu>
+      <interface-cost>1</interface-cost>
+      <dr-address>10.0.1.2</dr-address>
+      <bdr-address>10.0.1.1</bdr-address>
+      <router-priority>128</router-priority>
+      <adj-count>1</adj-count>
+      <hello-interval>20</hello-interval>
+      <dead-interval>40</dead-interval>
+      <retransmit-interval>5</retransmit-interval>
+      <ospf-stub-type>Not Stub</ospf-stub-type>
+      <authentication-type>None</authentication-type>
+      <ospf-interface-protection-type>None</ospf-interface-protection-type>
+      <ospf-interface-topology>
+         <ospf-topology-name>default</ospf-topology-name>
+         <ospf-topology-id>0</ospf-topology-id>
+         <ospf-topology-metric>1</ospf-topology-metric>
+      </ospf-interface-topology>
+   </ospf-interface>
+</ospf-interface-information>
+Step 1: Create verify yaml file
+To achieve this, user need to write the below verify yaml file.
+Verify YAML File:
+FileName: verify_ospf_interface.yaml
+VERIFY:
+    device0:
+        ospf_interface_check:
+        args: [intf]
+        cmd: show ospf interface var['intf'] detail
+        xpath: /ospf-interface-information/ospf-interface
+    parameters:
+        interface-type:
+        value: LAN
+        operator: is-equal
+        hello-interval:
+        value: 1
+        operator: is-equal
+    ospf-interface-topology:
+    ospf-topology-metric:
+        operator: is-equal
+        value: 1
+        device1:
+    ospf_interface_check:
+        cmd: show ospf interface ae0.1 detail
+        xpath: /ospf-interface-information/ospf-interface
+    parameters:
+        interface-type:
+        value: LAN
+        operator: is-equal
+        hello-interval:
+        value: 1
+        operator: is-equal
+        ospf-interface-topology:
+        ospf-topology-metric:
+        operator: is-equal
+        value: 1
+.SH NON-XML BASED VERIFICATION
+Verify various parameters of 'show ospf interface ae0.5 detail' on device0 and device1
+cmd : show ospf interface ae0.5 detail
+output:
+regress@b54-saz12p-sys-4> show ospf interface ae0.5 detail
+Interface State Area DR ID BDR ID Nbrs
+ae0.5 BDR 0.0.0.0 2.2.2.2 1.1.1.1 1
+Type: LAN, Address: 10.0.5.1, Mask: 255.255.255.0, MTU: 1500, Cost: 1
+DR addr: 10.0.5.2, BDR addr: 10.0.5.1, Priority: 128
+Adj count: 1
+Hello: 20, Dead: 40, ReXmit: 5, Not Stub
+Auth type: None
+Protection type: None
+Topology default (ID 0) -> Cost: 1
+To achieve this, user need to write the below yaml file.
+Verify YAML File:
+VERIFY:
+device0:
+    ospf_interface:
+        cmd: show ospf interface ae0.1 detail
+        FORMAT: text
+        REGEXP: 'Nbrs\s?\n\s?.*?\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s+(.*?)\s?\n'
+        REGEXP_FLAGS: I
+        state:
+        GROUP: 1
+        VALUE: "BDR"
+    area_id:
+        GROUP: 2
+        VALUE: "0.0.0.0"
+    DR_id:
+        GROUP: 3
+        VALUE: "2.2.2.2"
+    BDR_id:
+        GROUP: 4
+        VALUE: "1.1.1.1"
+    hello_interval:
+        REGEXP: 'Hello\:\s+(\d+),'
+        GROUP: 1
+        VALUE: 1
+    dead_interval:
+        REGEXP: 'Dead\:\s+(\d+),'
+        GROUP: 1
+        VALUE: 1
+    neighbors_count:
+        GROUP: 5
+        VALUE: 1
+        Operator: is-equal
+.SH ADVANCED VERIFICATION
+          Advanced verification is used to support user-defined xfwaessions and functions, instead of using predefined operators to compare obtained.
+For instance, a user may need an evaluation like "sum(member_link_tx_pkts) >= ae_tx_pkts".
+Users can use any python expressions as part 'EXPR:' option.
+  Example YAML File:
+      Verify the sum of ae member link output packets is  greater-than-or-equal-t the aggregate ae0 interface statistics.
+
+    ae_total_pkts_check:
+        ARGS: [ ae, member_intfs]
+        EXPR: sum(member_tx_pkts) >= ae_tx_pkts
+        PREQ: [ae_tx_pkts, member_tx_pkts]
+    ae_tx_pkts:
+        type: get
+        cmd: show interface var['ae']
+        xpath: /interface-information/logical-interface/lag-traffic-statistics/lag-bundle/output-packets
+    member_tx_pkts:
+        type: get
+        cmd: show interface ge-0/0/<<var['member_intfs']>> detail
+        xpath: /interface-information/physical-interface/traffic-statistics/output-packets
+
+    VERIFY:
+        device0:
+        TEMPLATE['ae_total_pkts_check']:
+    args:
+        - ae: ae0.1
+        - member_intfs: 1..2
+
+.B RESERVED KEYS OF VE:
+ - All keys are case-insensitivity.
+
+1.  verify 
+    
+2.  use_template
+    
+3.  use_library
+    
+4.  devices
+    
+5.  cmd
+    
+6.  include_all
+    
+7.  skip
+    
+8.  mode
+    
+9.  tag
+   
+10. parameters
+    
+11. xpath
+    
+12. operator
+    
+13. value
+    
+14. verify_tmpl
+    
+15. regexp
+    
+16. group
+    
+17. format
+    
+18. type
+    
+19. excute_on
+    
+20. greep
+    
+21. match all
+    
+22. iterator
+    
+23. iterate_until
+    
+24. func
+    
+25. interval
+    
+26. timeout
+    
+27. verify_template
+    
+28. args
+    
+29. iterate_for
+    
+30. args
+    
+31. iterate_for
+    
+32. preq
+    
+33. expr
+    
+34. template
+    
+35. regexp_flags
+    
+36. grep_flags
+    
+37. cmd_timeout
+    
+38. cmd_pattern
+    
+39. failmsg
+    
+40. passmsg
+    
+41. xpath_filter
+    
+42. info
+    
+43. suppress_log
+
+.B KEYS AND USAGE:
+
+.SH VERIFY
+Every main verification yaml file must contain 'verify' as a root node/key. ( Should start with verify as Root key ).
+User can define device specific checks/testcases under that 'verify' key like mentioned below
+
+VERIFY:
+    r0:
+        ospf_full_neighbor_check:
+            cmd: "show ospf neighbor"
+            xpath: /ospf-neighbor-information/ospf-neighbor/ospf-neighbor-state
+            operator: is-equal
+            value: Full
+    r1:
+        ospf_full_neighbor_check:
+            cmd: "show ospf neighbor"
+            xpath: /ospf-neighbor-information/ospf-neighbor/ospf-neighbor-state
+            operator: is-equal
+            value: Full
+
+.SH VERIFY_TEMPLATE
+Every template yaml file must contain 'verify_template' as root node/key. It should start with VERIFY_TEMPLATE.
+In the main verification yaml file itself, users can utilize the template by having USE_TEMPLATE as Key/Root Node.
+    VERIFY_TEMPLATE:
+        verify_evpn_neighbor:
+            ARGS: [neighbor, instance]
+            cmd: "show evpn instance var['instance'] neighbor var['neighbor'] extensive"
+        encapsulation:
+            xpath: /evpn-instance-information/evpn-instance/evpn-encap-type
+            operator: is-equal
+        svtep:
+            xpath: /evpn-instance-information/evpn-instance/evpn-source-vtep-ipaddr
+            operator: is-equal
+            router_id:
+            xpath: /evpn-instance-information/evpn-instance/evpn-router-id
+            operator: is-equal
+
+.SH USE_TEMPLATE
+use_template takes a list of file names which are used for the template calls. It should defined under 'VERIFY' key.
+
+    VERIFY:
+        USE_TEMPLATE: [OSPF_JUNOS_TMPL.yaml, ISIS_JUNOS_TMPL.yaml]
+        device0:
+
+.SH CMD
+The user is required to provide the command value using this option. It comes under the check/testcase/sub-testcase level
+
+Example
+User can call both physical or logical name of interfaces
+    Physical name:
+    cmd: show ospf interace ae0.1 detail
+    Logical name:
+    cmd: show interfaces tv['device0_intf1_pic'] terse
+    tv['device0__intf1__pic'] will substitute value of tv['resources__device0__interfaces__intf1__pic']
+If user require validating same value on multiple commands like on multiple interfaces/neighbors.
+User need to use same syntax as config Engine like double angle bracket <<..>> syntax
+cmd with modifier:
+Below 'cmd' validates output of 3 interfaces ( ae0.1 , ae0.2 and ae0.3).
+ospf_interfac_check:
+cmd: show ospf interface ae0.<<1..3>> detail
+
+.SH CMD_TIMEOUT
+  Users can provide a timeout value of given cmd. The default value is 60 seconds.
+    Example
+    - check_ping waits for 200 seconds before command timeout to happen.
+    check_ping:
+        ARGS: [ip,count: 10]
+        cmd: ping var['ip'] count var['count']
+        cmd_timeout: 200
+        FORMAT: text
+        REGEXP: '(\d+)\s+packets\s+transmitted,\s+(\d+)\s+packets\s+received,\s+(\d+)\%\spacket\sloss'
+        packet loss:
+        GROUP: 3
+        value: 50
+        operator: is-lt-or-equal
+        CMD_PATTERN
+.SH XPATH
+
+XPATH is a query language for xml. Users are required to mention, in xpath format, which element of the xml-output to match.
+
+1. Define the xpath at the top level itself as base-xpath, at the same hierarchy as cmd, which will be applicable for the whole testcase
+
+    device0:
+        ospf_interface_check:
+        cmd: show ospf interface ae0.1 detail
+        xpath: /ospf-interface-information/ospf-interface
+    parameters:
+        interface-type:
+        value: LAN
+        operator: is-equal
+    hello-interval:
+        value: 1
+        operator: is-equal
+
+2. xpath can be used to represent parameters in the next-level ( nested )
+
+    device0:
+        ospf_interface_check:
+        cmd: show ospf interface ae0.1 detail
+        xpath: /ospf-interface-information/ospf-interface
+    parameters:
+        ospf-interface-topology/ospf-topology-metric:
+        operator: is-equal
+    value: 1
+3. Users can define xpath in sub-test case level, which will override the base xpath
+    VERIFY_TEMPLATE:
+        lsdist_node_spring_sttr:
+        ARGS: [node_iso level]
+        cmd: "show route table lsdist.0 te-node-iso var['node_iso'].00 extensive "
+    node_block_start:
+        xpath: //node-spring-srgb-block/node-spring-srgb-block-start
+        spring_algorithm:
+        xpath: //node-spring-algorithm/node-spring-algorithm-type
+
+VALIDATE XML OUTPUT WHICH CONTAINS AN ARRAY OF ELEMENTS
+
+Using XPATH, User can retrieve particular element or set of elements from array of elements.
+In this below example (show ospf neighbor | display xml), ospf-neighbor-information contains array of ospf-neighbor elements.
+
+Xpath to choose ospf-neighbors which contains ospf-neighbor-state as Full:
+
+/ospf-neighbor-information/ospf-neighbor[ospf-neighbor-state="Full"]
+
+Xpath to choose ospf-neighbor which contains interface-name as ae1.11:
+
+/ospf-neighbor-information/ospf-neighbor[interface-name="ae1.11"]
+
+Xpath to retrieve neighbor-priority (128) of ospf-neighbor on interface ae1.11:
+
+/ospf-neighbor-information/ospf-neighbor[interface-name="ae1.11"]/neighbor-priority
+
+.B XML output for reference:
+<ospf-neighbor-information >
+    <ospf-neighbor>
+        <neighbor-address>10.0.1.2</neighbor-address>
+        <interface-name>ae1.11</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>39</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>11.0.1.2</neighbor-address>
+        <interface-name>ae1.12</interface-name>
+        <ospf-neighbor-state>ExStart</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>32</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>12.0.1.2</neighbor-address>
+        <interface-name>ae1.13</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>33</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>13.0.1.2</neighbor-address>
+        <interface-name>ae1.14</interface-name>
+        <ospf-neighbor-state>ExStart</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>34</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>14.0.1.2</neighbor-address>
+        <interface-name>ae1.15</interface-name>
+        <ospf-neighbor-state>ExStart</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>38</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>15.0.1.2</neighbor-address>
+        <interface-name>ae1.16</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>32</activity-timer>
+    </ospf-neighbor>
+</ospf-neighbor-information>
+
+.SH PARAMETERS
+
+Parameters is used to differentiate between a user defined test case and executable node.
+
+Parmeters:
+     Interface-type:
+         Value: LAN
+         Operator: not-equal
+     Hello-interval:
+         Value: 1
+         Operator: not-equal
+Note that here interface-type and hello-interval is part of xml output.
+
+.SH ARGS
+ARGS is used as the parameter list while calling the template
+Template_file
+    OSPF_interface_check:
+        ARGS: [intf: 5]
+        Cmd: show ospf interface ae0.var['intf'] detail
+    Main_file
+        Ospf_interface_check:
+        Args: [intf: <<1..3>>]
+If ARGS is not passed from main yaml file , then the default values will be used for cmd.
+.B FORMAT
+       Format is used to distinguish between the xml processing and text data processing. Default format is Xml.
+
+.SH TAG
+         Tag is used for executing the subset of test cases from the yaml file.
+
+.SH ITERATE_UNTIL
+       Iterate_until is used for special cases where user want to iterate the testcase until it becomes True or until timeout happens.
+Example: User requires iterating the testcase till a protocol converges, like OSPF neighbor becomes Full State.
+  
+Users should mention iterate interval under 'interval' option and max timeout mentioned under 'timeout' option.
+.B Syntax:
+    iterate_until:
+    interval : <in seconds>
+    timeout : <in seconds>
+
+.SH Iterate_for
+Iterate_for is used for special cases where the user wants to iterate a given testcase for a specific duration with specific interval.
+It returns True, only if all iteration pass.
+It returns False, if any one iteration fails.
+.B Syntax
+    iterate_for:
+    interval : <in seconds>
+    timeout : <in seconds
+
+    VERIFY:
+        device0:
+            ospf_full_neighbor_check:
+                cmd: "show ospf neighbor"
+                xpath: /ospf-neighbor-information/ospf-neighbor/ospf-neighbor-state
+                operator: is-equal
+                value: Full
+            iterate_for:
+                interval: 5
+                timeout: 20
+
+.SH Grep
+Grep is used for non-xml output processing. When using Grep, make sure your format is in text.
+
+.B Example
+           Device1:
+              Ospf_interface:
+                   ARGS: [val_num: 5, first_ip: 6]
+                   Cmd: show route
+                   FORMAT: text
+                   GREP: 'Static'
+                   direct_route:
+                       GREP: 'Direct'
+                       Operator: count-is-equal
+                         Value: 23
+                   Static_route :
+                       Iterator_until:
+                         Interval: 5
+                         timeout: 20
+                    GREP: 'static'
+                    Operator: count-is-equal
+                    Value:3
+Grep can be single value or may be a list of values. Each testcase may contain one global grep or each sub-testcase can contain a grep.
+
+Note: A testcase can't contain both grep and regrex at the same level.
+
+
+.SH Regexp
+Regexp is used for the non-xml output processing. When using Regexp make sure your format is in text.
+
+device0:
+    ospf_interface:
+        cmd: show ospf interface ae0.1 detail
+        FORMAT: text 
+        REGEXP: '<REGEXP >'
+        RE_FLAGS: I
+        state:
+            GROUP: 1
+            VALUE: "BDR"
+        area_id:
+            GROUP:2
+            VALUE: "O.O.O.O"
+        hello_interval:
+            REGEXP: 'Hello\:\s+(\d+),'
+            GROUP: 1
+            VALUE: 1
+
+In Regexp if we want to verify or fetch few parameters only we can pass in this format in robot file.
+    &{output}   Run Keyword and Continue On Failure    Verify     devices=r0    checks=ospf_interface:[hello_interval,area_id]  args=${args}
+
+.SH REGEXP multiple match:
+For matching multiple instances of regular expression set the keyword 'match_all' to true.
+    Example:
+        Ospf_interface:
+            cmd: show ospf interface ae1.15 detail
+            format: text
+            regexp: '(addr)|(10\.\d+\.\d+\.\d+)'
+            match_all: True
+        address:
+            GROUP: 1
+            VALUE: ['addr', 'addr']
+            operator: is-equal
+        ip-address:
+            GROUP: 2
+            VALUE: ['10.0.5.1', '10.0.5.2', '10.0.5.1']
+            operator: is-equal
+
+Regexp can be a single value or may be a list of values. Each testcase may contain one global regexp or each sub-testcase can contain a regexp.
+Note: A testcase can't contain both grep and regexp at the same level.
+
+.SH REGEXP_FLAGS
+Regexp_flags will be the part of regexp. The Verification Engine supports all the regular expression flags supported by python.
+re.I is the default flag.
+    Example:
+            interface_checkup:
+            cmd: show interfaces terse et-0/0/0:0
+        FORMAT: text
+            REGEXP: 'et.*?\s+(\w+)\s+(\w+)\s*\n'
+            REGEXP_FLAGS: re.I
+        admin:
+            GROUP: 1
+            VALUE: "up"
+            link:
+            GROUP: 2
+            VALUE: "up"
+
+.B Group
+Regexp_flags will be the part of regexp. The Verification Engine supports all the regular expression flags supported by python
+
+.B Operators
+Operator specifies a qualifier to perform after getting the result. The default operator is is-equal.
+VE(Verification Engine) retrieves the obtained value from the DUT/device using xpath or regexp/grep and compares it with the user provided expected value.
+Basic Expression
+OBTAINED_VALUE <operator> EXPECTED_VALUE
+Where:
+OBTAINED_VALUE => retrieved from Device/DUT
+EXPECTED_VALUE => User provided input in 'VALUE' field in verify yaml file
+Operator => User provided input in Operator field in verify yaml file like is-equal, is-gt,..etc
+
+.B List of Operators
+.SH is-equal
+    Test if an element string or integer value matches a given value.
+    Data types Supported:  
+    Numeric, String, List  Values
+    
+.B Examples:
+        Obtained_Value: 10
+        operator: is-equal
+        expected_value: 10
+        Result: True
+
+      
+.SH not-equal
+    Data types Supported: 
+    Numeric , String, List Values
+.B Examples:
+        Obtained_Value: 10
+        operator: not-equal
+        expected_value: 10
+        Result: False
+
+.SH regexp
+    Data types Supported: 
+    String value
+            Syntax of Expected Value:    
+            Python Regular Expression 
+Example:
+        Obtained_Value: Host-Name is toby
+        operator: regexp
+        expected_value: 'is\s+toby'
+        Result: True
+
+.SH non-regexp
+        Data types Supported:
+        String value
+        Syntax of Expected Value:
+        Python Regular Expression
+Example:
+        Obtained_Value: Host-Name is toby
+        operator: non-regexp
+        expected_value: 'is\s+JT'
+        Result: True
+
+.SH is-subset
+        Data types Supported:
+        List Values
+Example:
+        Obtained_Value: [1040, 1000, 1020]
+        operator: is-subset
+        expected_value: [1000, 1020, 1030, 1040, 1050]
+        Result: True
+
+.SH is-superset
+        Data types Supported:
+        List Values
+Example:
+        Obtained_Value: [1000, 1020, 1030, 1040, 1050]
+        operator: is-superset
+        expected_value: [1040, 1000, 1020]
+        Result: True
+
+.SH is-disjoint
+        Data types Supported:
+        List Values
+Example:
+        Obtained_Value: [1040, 1000, 1020]
+        operator: is-disjoint
+        expected_value: [1010, 1050]
+        Result: True
+
+.SH in-range
+        Data types Supported: 
+        Numeric ( integer,float,negative ) values 
+            Syntax of expected value:
+            <startValue> to <EndValue>
+                          Note:  in-range includes both start and end values.
+
+Example:
+        Obtained_Value: -1
+        operator: in-range
+        expected_value: -1 to 2.5
+        Result: True
+
+.SH not-range
+    Data types Supported: 
+    Numeric ( integer,float,negative ) values 
+            Syntax of expected value:
+            <startValue> to <EndValue>
+                          Note:  in-range includes both start and end values.
+
+Example:
+        Obtained_Value: 3
+        operator: in-range
+        expected_value: -1 to 2.5
+        Result: True
+
+.SH is-gt
+        Data types Supported: 
+        Numeric (integer, float, negative) values 
+Example:
+        Obtained_Value: 1
+        operator: is-gt
+        expected_value: 0.5
+        Result: True
+
+
+.SH is-lt
+        Data types Supported: 
+        Numeric (integer, float, negative) values 
+Example:
+        Obtained_Value: 0.2
+        operator: is-lt
+        expected_value: 0.5
+        Result: True
+
+.SH is-gt-or-equal
+        Data types Supported: 
+        Numeric (integer, float, negative) values 
+Example:
+        Obtained_Value: 1
+        operator: is-gt-or-equal
+        expected_value: 0.5
+        Result: True
+
+.SH is-lt-or-equal
+        Data types Supported: 
+        Numeric (integer, float, negative) values 
+Example:
+        Obtained_Value: 1
+        operator: is-lt-or-equal
+        expected_value: 0.5
+        Result: True
+
+.SH contains
+        Data types Supported: 
+        String or list values 
+Example:
+        Obtained_Value: "hello world"
+        operator: contains
+        expected_value: "Hello"
+        Result: True
+
+.SH is-in
+        Data types Supported: 
+        String, list, ipv4 address values 
+Example:
+        Obtained_Value: "Hello"
+        operator: is-in
+        expected_value: "hello world"
+        Result: True
+
+.SH not-in
+        Data types Supported: 
+        String, list, ipv4 address values 
+Example:
+        Obtained_Value: "Hello"
+        operator: not-in
+        expected_value: "hello world"
+        Result: False
+
+.SH exists
+        Validates whether xml elements exist or not. If it exists then it returns True.	                      
+        Data types Supported: 
+        XML elements (Used only with xml output) 
+VERIFY:
+        R0:
+            Ifl_up_status_check:
+            cmd:  show interfaces ae1.11 brief
+            xpath: /interface-information/logical-interface/if-config-flags/iff-up
+            operator: exists 
+.SH not-exists
+            Validates whether xml elements exists or not. If it does not exists then it returns True.	 
+            Data types Supported: 
+            XML elements (Used only with xml output) 
+            Example:   
+             Please refer to 'exists' operator for example. 
+.SH count-is-equal
+
+Verify number of occurrence of an XML element is equal to a given numeric value in xml-output. If used with text output / GREP , it verifies number of occurrences of pattern in the text output.	 
+
+Example:  1 ( xml output)  
+        User wants to validate number of ospf neighbor with ospf-neighbor-state as Full as 4
+show ospf neighbor | display xml
+    
+<ospf-neighbor-information>
+    <ospf-neighbor>
+        <neighbor-address>10.0.1.2</neighbor-address>
+        <interface-name>ae1.11</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>38</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>10.0.2.2</neighbor-address>
+        <interface-name>ae1.12</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>35</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>10.0.3.2</neighbor-address>
+        <interface-name>ae1.13</interface-name>
+        <ospf-neighbor-state>2Way</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>0</neighbor-priority>
+        <activity-timer>33</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>10.0.4.2</neighbor-address>
+        <interface-name>ae1.14</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>32</activity-timer>
+    </ospf-neighbor>
+    <ospf-neighbor>
+        <neighbor-address>10.0.5.2</neighbor-address>
+        <interface-name>ae1.15</interface-name>
+        <ospf-neighbor-state>Full</ospf-neighbor-state>
+        <neighbor-id>2.2.2.2</neighbor-id>
+        <neighbor-priority>128</neighbor-priority>
+        <activity-timer>39</activity-timer>
+    </ospf-neighbor>
+</ospf-neighbor-information>
+    
+
+  VERIFY YAML FILE:
+    VERIFY:
+        device0:
+            OSPF_full_neighbot_count:
+                cmd: "show ospf neighbor"
+                xpath: /ospf-neighbor-information/ospf-neighbor[ospf-neighbor-state="Full"]
+                operator: count-is-equal
+                value: 4
+.SH count-is-gt
+                     
+        Verify number of occurrence of an XML element is greater than a given numeric value in xml-output. When used with text output / GREP, it verifies the number of occurrences of pattern in the text output.	 
+            Data types Supported: 
+            XML elements (Used only with xml output) / Text Output with grep pattern  
+ Example:  
+                     See example for 'count-is-equal' for usage.
+
+.SH count-is-lt
+                     
+    Verify number of occurrence of an XML element is less than a given numeric value in xml-output.  When used with text output / GREP, it verifies number of occurrences of pattern in the text output.
+        Data types Supported: 
+        XML elements (Used only with xml output) / Text Output with grep pattern  
+ Example:  
+                     Please refer example of count-is-equal for usage.
+.SH count-is-gt-or-equal
+                     
+        Verify number of occurrences of an XML element is greater than or equal to a given numeric value in xml-output.  When used with text output / GREP, it verifies the number of occurrences of pattern in the text output.		 
+Data types Supported: 
+XML elements (Used only with xml output) / Text Output with grep pattern  
+ Example:  
+        Please refer example of count-is-equal for usage.
+
+.SH count-is-lt-or-equal
+                     
+    Verify number of occurrences of an XML element is less than or equal to a given numeric value in xml-output.  When used with text output / GREP, it verifies the number of occurrences of pattern in the text output.		 
+        Data types Supported: 
+        XML elements (Used only with xml output) / Text Output with grep pattern  
+ Example:  
+        Please refer to example of count-is-equal for usage.
+
+.SH Constraints
+    Operator can have constraints as optional arguments.
+    Syntax:
+                                 <operator> [<constraint1>,<constraint2>]
+          Like:    is-equal [ignorecase,unordered]
+.SH Ignorecase
+    Used to compare strings with case insensitive  
+    Examples:
+        obtained_Value Operator  Expected_Value Result
+        Toby    is-equal[Ignorecase]   TOBY   True
+
+.SH Unordered
+    -   Used to compare two lists which are un-ordered
+    -   Examples:
+        Obtained_Value: '['LAN', 'P2P']'
+        operator: is-equal[Unordered] 
+        expected_value: '['P2P', 'LAN']'
+        Result: True
+
+.SH VALUE
+    User needs to give expected value to perform the operation, a return the result.
+
+.SH PREQ
+    User needs to give the test cases (Pre-requisite) which is required for evaluation of EXPR and FUNC.
+    Example
+    Please refer 'Advanced Verification' section for example. (Example:)
+
+.SH FUNC
+    User needs to give python file lib in USE_LIBRARY. Make sure your file present in cwd. make sure your function variables present in preq
+
+.SH EXPR
+    User defined python expression instead of using predefined operators like is-equal. Users can write their own expression to evaluate the testcase. Make sure that variables used in that expression are part of in 'preq' option.
+    Example
+    Please refer 'Advanced Verification' section for example. (Example:)
+
+.SH execute_on
+
+By default, all commands will be executed in 'cli' mode for Junos devices and all commands will be executed in 'shell' mode for non junos devices.
+If the user wants to execute a command in different modes (config, vty, shell, cty) then the user has to specify 'execute_on' key in verify yaml file. Default mode value is 'cli'.
+Consider below examples.
+Example
+     VERIFY:
+     
+         device0:
+     
+             ifconfig_me0:
+                 cmd: ifconfig me0
+                 format: text
+                 execute_on:
+                        mode: shell
+                 regexp: 'RUNNING'
+                 GROUP: 1
+                 VALUE: RUNNING
+     
+             fpc_route_summary:
+                 cmd: show route summary
+                 format: text
+                 execute_on:
+                     mode: vty
+                     destination: fpc0
+                 regexp: '.*?Default\s+(\d+)\s+(\d+)'
+                 GROUP: 2
+                 VALUE: 20000
+                 OPERATOR: is-gt
+
+In the above example,  ifconfig_me0  testcase executes command "ifconfig me0" on shell mode.  
+In fpc_route_summary testcase,  command "show route summary" is executed on vty fpc0.
+ vty and cty accepts extra mandatory argument "destination" that user must has to specify.
+
+When using vty mode, if the user wants to disable the syslog messages before executing vty commands, they can do 
+so by using an optional argument "disable_syslog" and setting it to True as shown below. By default it is set to False.
+
+execute_on:
+             mode:         vty
+             destination: fpc0
+             disable_syslog: True
+
+For VC setup. If the user wants to execute cmd on a specific node of a specific controller, the user can follow the below approach by defining node and controller key.
+
+execute_on:
+             node:          name_of_node
+             controller:  name_of_controller
+             mode:         cty
+
+If node or controller key is not present, whichever is the primary node (in if node key is not specified) or master controller (in case of controller key is not specified) will be selected.
+If the user wants super user access to the box, the user can specify user key in the execute_on dictionary with the value su like below.
+execute_on:
+             node:          name_of_node
+             controller:  name_of_controller
+             mode:         cty
+             user:            su
+If the user wants super user access to the box with specific password, the user can specify user key in the execute_on dictionary with the value su as well as password key with the actual password value like below.
+execute_on:
+             node:          name_of_node
+             controller:  name_of_controller
+             mode:         cty
+             user:            su
+             password:   device_password
+
+
+.SH ITERATOR
+
+Using this 'iterator' option, the user can perform looping with the yaml file, instead of looping in Robot file.
+It supports validating complex/scale scenarios where user require to validate same parameters across different interfaces, neighbors,..etc.
+
+Syntax
+     
+VERIFY:
+                <device0>:
+                         <check/testcase>:      
+      iterator:
+                  loop(<element11>,<element12>,<element13>,):
+                      loop(<element21>,<element22>,<element23>,):
+                               loop(<element31>,<element32>,<element33>,):
+
+
+      Where:
+       -    'element' are verification engine keys. 
+            Ex:  cmd, value, xpath, parameters:hello-interval:value, args:intf,
+       -    Even user can do nested looping by providing loop() inside another loop().
+       -    'iterator' is defined same level as 'cmd' under check/testcase level 
+
+
+
+
+
+
+Example 1
+
+User require to validate hello-interval as 1 and dead-interval as 4 on multiple interfaces ae151.0, ae152.0, ae153.0, ae158.0. (Refer below xml output).
+
+Please note here all interface contains same hello and dead interval value.
+
+XML Output:  (Removed some elements to make it easily readable) 
+regress@toby-box-1> show ospf interface detail | display xml
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/15.1X53/junos">
+    <ospf-interface-information xmlns="http://xml.juniper.net/junos/15.1X53/junos-routing">
+        <ospf-interface>
+            <interface-name>ae151.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae152.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae153.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae154.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae155.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae156.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae157.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae158.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+    </ospf-interface-information>
+    <cli>
+        <banner>{master:0}</banner>
+    </cli>
+</rpc-reply>
+
+
+  Solution 1   (Using multiple commands) 
+
+    User can execute multiple commands (per interface specific command) and validate hello and dead interval under each command output.
+
+        show ospf interface ae151.0 detail 
+        show ospf interface ae152.0 detail 
+        show ospf interface ae158.0 detail 
+
+      In this scenario user required to execute multiple commands with different interface values.
+      And list of interface values are provided via argument 'intf'
+
+  Verify yaml file:
+         verify:
+                      r0:
+                            ospf_interface_check:
+                                                iterator:
+                                                         loop(args:intf)
+                                                args:  [ intf ]
+            cmd: show ospf interface var['intf'] detail
+            xpath: /ospf-interface-information/ospf-interface
+            parameters:
+                 hello-interval:
+                             value: 1
+                 dead-interval:
+                             value: 4
+
+                Using above iterator with loop(args:intf) as input, it loops over each interface value and execute 'cmd' per interface specific and validate hello and dead interval as 1 and 4 respectively.
+It executes 'ospf_interface_check' multiple times with different intf values  as mentioned below:
+Executions and values: (Total 8 Executions, because 'args:intf' contains 8 values) 
+                             Execution 1 :       args:intf as  ae151.0 
+                             Execution 2 :       args:intf as  ae152.0 
+                             Execution 3 :       args:intf as  ae153.0 
+                             Execution 8 :       args:intf as  ae158.0 
+
+Robot file:
+
+              User can mention list of interfaces as part of  intf arguments as below.
+                          ${args}=    Evaluate     { 'intf': ['ae151.0', 'ae152.0', 'ae153.0', 'ae154.0', 'ae155.0', 'ae156.0', 'ae157.0', 'ae158.0'] }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+                          OR 
+                 User can use <<..>> Operator to simplify further as below.
+            ${args}=    Evaluate     { 'intf':  'ae15<<1..8>>.0' }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+
+Solution 2   (Using Multiple Xpaths) 
+
+    User can execute single command (refer xml output mentioned below under Example 1) and validate hello and dead interval under each ospf-interface stanza using multiple xpaths. 
+
+        show ospf interface detail | display xml         <<< it displays all the interfaces using  array of <ospf-interface> 
+
+            Multiple Xpaths to select each interface parameters:
+
+                                   xpath1:   /ospf-interface-information/ospf-interface[interface-name="ae151.0"]
+                                   xpath2:   /ospf-interface-information/ospf-interface[interface-name="ae152.0"]
+                                   xpath3:   /ospf-interface-information/ospf-interface[interface-name="ae153.0"]
+                                   xpath8:   /ospf-interface-information/ospf-interface[interface-name="ae158.0"]
+
+  Verify yaml file:
+         verify:
+                      r0:
+                            ospf_interface_check:
+                                                iterator:
+                                                         loop(args:intf)
+                                                args:  [ intf ]
+            cmd: show ospf interface detail             <<< single command 
+            xpath: /ospf-interface-information/ospf-interface[interface-name="var['intf]"]             
+            parameters:
+                 hello-interval:
+                             value: 1
+                 dead-interval:
+                             value: 4
+
+                Using above iterator with loop(args:intf) as input, it loops over each interface value and execute xpath per interface specific and validate hello and dead interval as 1 and 4 respectively.
+Executions and values: (Total 8 Executions, because 'args:intf' contains 8 values) 
+                         Execution 1 :       args:intf as  ae151.0 
+                         Execution 2 :       args:intf as  ae152.0 
+                         Execution 3 :       args:intf as  ae153.0 
+                         Execution 8 :       args:intf as  ae158.0 
+
+     Robot file:
+
+              User can mention list of interfaces as part of  intf arguments as below.
+                          ${args}=    Evaluate     { 'intf': ['ae151.0', 'ae152.0', 'ae153.0', 'ae154.0', 'ae155.0', 'ae156.0', 'ae157.0', 'ae158.0'] }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+                          OR 
+                 User can use  <<..>> operator  to simplified further as below.
+            ${args}=    Evaluate     { 'intf':  'ae15<<1..8>>.0' }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+
+Example 2
+
+User require to validate hello-interval as 1,2,4,6,8,10,12,14 and dead-interval as 4,8,16,24,32,40,48,56 on multiple interfaces ae151.0, ae152.0, ae153.0, ae158.0 respectively (Refer below xml output). 
+
+Please note here each interface contains different hello and dead interval values.
+
+XML Output:  (Removed some elements to make it easily readable) 
+regress@toby-box-1> show ospf interface detail | display xml
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/15.1X53/junos">
+    <ospf-interface-information xmlns="http://xml.juniper.net/junos/15.1X53/junos-routing">
+        <ospf-interface>
+            <interface-name>ae151.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>1</hello-interval>
+            <dead-interval>4</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae152.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>2</hello-interval>
+            <dead-interval>8</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae153.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>4</hello-interval>
+            <dead-interval>16</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae154.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>6</hello-interval>
+            <dead-interval>24</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae155.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>8</hello-interval>
+            <dead-interval>32</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae156.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>10</hello-interval>
+            <dead-interval>40</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae157.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>12</hello-interval>
+            <dead-interval>48</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+        <ospf-interface>
+            <interface-name>ae158.0</interface-name>
+            <ospf-interface-state>Down</ospf-interface-state>
+            <ospf-area>0.0.0.0</ospf-area>
+            <dr-id>0.0.0.0</dr-id>
+            <bdr-id>0.0.0.0</bdr-id>
+            <neighbor-count>0</neighbor-count>
+            <interface-type>P2P</interface-type>
+            <mtu>9100</mtu>
+            <interface-cost>100</interface-cost>
+            <adj-count>0</adj-count>
+            <hello-interval>14</hello-interval>
+            <dead-interval>56</dead-interval>
+            <retransmit-interval>5</retransmit-interval>
+        </ospf-interface>
+    </ospf-interface-information>
+    <cli>
+        <banner>{master:0}</banner>
+    </cli>
+</rpc-reply>
+
+Solution 1   (Using multiple commands) 
+
+    User can execute multiple commands (per interface specific command) and validate hello and dead interval under each command output.
+
+        show ospf interface ae151.0 detail 
+        show ospf interface ae152.0 detail 
+        show ospf interface ae158.0 detail 
+
+      In this scenario 
+- user required to execute multiple commands with different interface values and list of interfaces are provided via argument 'intf'
+                -  Also user required to provide multiple hello and dead interval values using args:hello and args:dead arguments 
+       
+
+  Verify yaml file:
+         verify:
+                      r0:
+                            ospf_interface_check:
+                                                iterator:
+                                                         loop(args:intf,args:hello,args:dead)
+                                                args:  [intf,hello,dead]
+            cmd: show ospf interface var['intf'] detail
+            xpath: /ospf-interface-information/ospf-interface
+            parameters:
+                 hello-interval:
+                             value: var['hello']
+                 dead-interval:
+                             value: var['dead']
+
+                Using above iterator with loop(args:intf,args:hello,args:dead) as input, it loops over each interface value, hello-interval value and dead-interval value together. 
+It executes 'ospf_interface_check' multiple times with different values as mentioned below:
+Executions and values: (Total 8 executions, because each args contains 8 values) 
+                            Execution 1 :       args:intf as  ae151.0 , args:hello as 1  and  args:dead as 4 
+                            Execution 2 :       args:intf as  ae152.0 , args:hello as 2  and  args:dead as 8
+                            Execution 3 :       args:intf as  ae153.0 , args:hello as 4  and  args:dead as 16
+                            Execution 8 :       args:intf as  ae158.0 , args:hello as 14  and  args:dead as 56
+
+
+ Robot file:
+
+              User can mention list of interfaces as part of  intf arguments as below.
+                          ${args}=    Evaluate     { 'intf': ['ae151.0', 'ae152.0', 'ae153.0', 'ae154.0', 'ae155.0', 'ae156.0', 'ae157.0', 'ae158.0'] , 'hello':  ['1','2','4','6','8','10','12','14'] , 'dead': ['4','8','16','24','32','40','48','56'] }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+                          OR 
+                 User can use <<..>> Operator to simplify further as below if required.
+            ${args}=    Evaluate     { 'intf':  'ae15<<1..8>>.0' , 'hello':  '<<1..16#{step:2}>>' , 'dead':  '<<4..56#{step:8}>>'
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+
+Solution 2   (Using multiple commands, but 'values' are NOT passed via arguments) 
+
+  This solution is same as Solution 1 (above on), but interface,hello and dead values are hard-coded in the yaml file instead of passing it as arguments in Robot call.
+  Verify yaml file:
+         verify:
+                      r0:
+                            ospf_interface_check:
+                                                iterator:
+                                                         loop(cmd,parameters:hello-interval:value,parameters:dead-interval:value)
+                                                args:  [intf,hello,dead]
+            cmd: show ospf interface  ae15<<1..8>>.0 detail
+            xpath: /ospf-interface-information/ospf-interface
+            parameters:
+                 hello-interval:
+                             value:   ['1','2','4','6','8','10','12','14']
+                 dead-interval:
+                             value:  ['4','8','16','24','32','40','48','56']    <= this can be even mentioned as string "<<4..56#{step:8}>>"
+
+                Using above iterator with loop(cmd,parameters:hello-interval:value,parameters:dead-interval:value) as input, it loops over each cmd, hello-interval value and dead-interval value together. 
+It executes 'ospf_interface_check' multiple times with different values as mentioned below:
+                      Executions and values: (Total 8 executions, because each contains 8 values) 
+                      Execution 1 :       cmd as  ae151.0 , parameters:hello-interval:value as 1  and  parameters:dead-interval:value as 4 
+                      Execution 2 :       cmd as  ae152.0 , parameters:hello-interval:value  as 2  and  parameters:dead-interval:value as 8
+                      Execution 3 :       cmd as  ae153.0 , parameters:hello-interval:value as 4  and  parameters:dead-interval:value as 16
+                      Execution 8 :       cmd as  ae158.0 , parameters:hello-interval:value as 14  and  parameters:dead-interval:value as 56
+
+ Robot file:
+                      # No arguments passed in Robot call 
+                          verify      devices=r0     checks=ospf_interface_check
+
+Solution 3   (Using Multiple Xpaths) 
+
+    User can execute single command (refer xml output) mentioned below and validate hello and dead interval under each ospf-interface stanza using multiple xpaths. 
+
+        show ospf interface detail | display xml         <<< it displays all the interfaces using  array of <ospf-interface> 
+
+            Multiple Xpaths to select each interface parameters:
+
+                                   xpath1:   /ospf-interface-information/ospf-interface[interface-name="ae151.0"]
+                                   xpath2:   /ospf-interface-information/ospf-interface[interface-name="ae152.0"]
+                                   xpath3:   /ospf-interface-information/ospf-interface[interface-name="ae153.0"]
+                                   xpath8:   /ospf-interface-information/ospf-interface[interface-name="ae158.0"]
+
+In this scenario 
+- user required to apply multiple xpaths with different interface values and list of interfaces values are provided via argument 'intf'
+                -  Also user required to provide multiple hello and dead interval values using args:hello and args:dead arguments 
+       
+
+  Verify yaml file:
+         verify:
+                      r0:
+                            ospf_interface_check:
+                                                iterator:
+                                                         loop(args:intf,args:hello,args:dead)
+                                                args:  [intf,hello,dead]
+            cmd: show ospf interface detail
+            xpath: /ospf-interface-information/ospf-interface[interface-name="var['intf']"]
+            parameters:
+                 hello-interval:
+                             value: var['hello']
+                 dead-interval:
+                             value: var['dead']
+
+                Using above iterator with loop(args:intf,args:hello,args:dead) as input, it loops over each interface value, hello-interval value and dead-interval value together. 
+It executes 'ospf_interface_check' multiple times with different values as mentioned below:
+Executions and values: (Total 8 executions, because each args contains 8 values) 
+                            Execution 1 :       args:intf(xpath) as  ae151.0 , args:hello as 1  and  args:dead as 4 
+Execution 2 :       args:intf(xpath) as  ae152.0 , args:hello as 2  and  args:dead as 8
+Execution 3 :       args:intf(xpath) as  ae153.0 , args:hello as 4  and  args:dead as 16
+Execution 8 :       args:intf(xpath) as  ae158.0 , args:hello as 14  and  args:dead as 56
+
+
+ Robot file:
+
+              User can mention list of interfaces as part of  intf arguments as below.
+                          ${args}=    Evaluate     { 'intf': ['ae151.0', 'ae152.0', 'ae153.0', 'ae154.0', 'ae155.0', 'ae156.0', 'ae157.0', 'ae158.0'] , 'hello':  ['1','2','4','6','8','10','12','14'] , 'dead': ['4','8','16','24','32','40','48','56'] }
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+                          OR 
+                 User can use <<..>> Operator to simplify further as below if required.
+            ${args}=    Evaluate     { 'intf':  'ae15<<1..8>>.0' , 'hello':  '<<1..16#{step:2}>>' , 'dead':  '<<4..56#{step:8}>>'
+                          verify      devices=r0     args=${args}    checks=ospf_interface_check
+
+
+Example 3 (Nested Loop) 
+
+Consider user required to validate below scenario
+  for each transport-interval (value 1 to 4 ) : 
+            for each transport-pm ( value 1 to 4 ) :
+-   Need to check transport-pm name as "OTU-BBE","OTU-ES","OTU-SES","OTU-UAS" respectively  
+-   Need to check transport-pm-thresh as 960,162,108,108 respectively
+
+Verify Yaml File:
+VERIFY: 
+     r0:
+              near_end_otu_everything:
+           iterator:
+                  loop(args:trans_intvl):
+                      loop(args:trans_pm,parameters:transport-pm-name:value,parameters:transport-pm-thresh:value)
+            cmd: show interfaces transport pm otn currentday et-10/1/0
+            args: [trans_intvl: <<1..4>>, trans_pm: <<1..4>>]
+            xpath: /interface-transport-information/interface-information/physical-interface/transport-interval-information/transport-interval[var['trans_intvl']]/transport-pm[var['trans_pm']]
+            parameters:
+               transport-pm-name:
+                  value: ["OTU-BBE","OTU-ES","OTU-SES","OTU-UAS"]
+                  operator: is-equal
+               transport-pm-count:
+                  value: 0
+                  operator: is-equal
+               transport-pm-thresh:
+                  value: [960,162,108,108]
+                  operator: is-equal
+               transport-pm-tca-enabled:
+                  value: "No"
+                  operator: is-equal
+               transport-pm-tca-raised:
+                  value: "No"
+                  operator: is-equal
+
+

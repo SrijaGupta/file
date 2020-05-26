@@ -1,0 +1,32 @@
+VERIFY_TEMPLATE:
+
+  check_chassis_fpc:
+    cmd: show chassis fpc
+    xpath: /multi-routing-engine-results
+    parameters:
+        re-name:
+            xpath: multi-routing-engine-item/re-name
+        slot:
+            xpath: multi-routing-engine-item/fpc-information/fpc/slot
+        state:
+            xpath: multi-routing-engine-item/fpc-information/fpc/state
+        temperature:
+            xpath: multi-routing-engine-item/fpc-information/fpc/temperature
+        cpu-total:
+            xpath: multi-routing-engine-item/fpc-information/fpc/cpu-total
+        cpu-interrupt:
+            xpath: multi-routing-engine-item/fpc-information/fpc/cpu-interrupt
+        cpu-1min-avg:
+            xpath: multi-routing-engine-item/fpc-information/fpc/cpu-1min-avg
+        cpu-5min-avg:
+            xpath: multi-routing-engine-item/fpc-information/fpc/cpu-5min-avg
+        cpu-15min-avg:
+            xpath: multi-routing-engine-item/fpc-information/fpc/cpu-15min-avg
+        memory-dram-size:
+            xpath: multi-routing-engine-item/fpc-information/fpc/memory-dram-size
+        memory-heap-utilization:
+            xpath: multi-routing-engine-item/fpc-information/fpc/memory-heap-utilization
+        memory-buffer-utilization:
+            xpath: multi-routing-engine-item/fpc-information/fpc/memory-buffer-utilization
+        comment:
+            xpath: multi-routing-engine-item/fpc-information/fpc/comment

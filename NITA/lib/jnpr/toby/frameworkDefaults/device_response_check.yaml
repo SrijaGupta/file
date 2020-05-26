@@ -1,0 +1,24 @@
+junos:
+  config:
+    status: False
+    patterns:
+      - syntax error
+      - commit failed
+      - unknown command 
+      - ^error:.*
+      - Invalid.*:.*
+  cli:
+    status: False
+    patterns:
+      - syntax error
+      - unknown command
+
+## TBD
+#  vty: 
+#    status: False
+#    patterns:
+#      - syntax error
+#  cty:
+#    status: False
+#    patterns:
+#      - syntax error

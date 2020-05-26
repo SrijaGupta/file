@@ -1,0 +1,66 @@
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/15.1I0/junos">
+    <x509-pki-certificate-info-list xmlns="http://xml.juniper.net/junos/15.1I0/junos-pki">
+        <pkid-x509-certificate-information junos:style="detail">
+            <identifier>mynewcert</identifier>
+            <version>3</version>
+            <serial-number-list>
+                <serial-number-x509>025d78d9</serial-number-x509>
+            </serial-number-list>
+            <issuer-name>
+                <distinguished-name>
+                    <organization-name>DES</organization-name>
+                    <common-name>scep-root</common-name>
+                    <domain-component>Juniper</domain-component>
+                </distinguished-name>
+            </issuer-name>
+            <subject-name>
+                <distinguished-name>
+                    <country-name>US</country-name>
+                </distinguished-name>
+            </subject-name>
+            <subject-string-list>
+                <subject-string>C=US</subject-string>
+            </subject-string-list>
+            <alternate-subject-list>
+                <alternate-subject>email empty</alternate-subject>
+                <alternate-subject>fqdn empty</alternate-subject>
+                <alternate-subject>1.1.1.1</alternate-subject>
+                <alternate-subject>ipv6 empty</alternate-subject>
+            </alternate-subject-list>
+            <validity>
+                <not-before>04- 5-2018 21:58 UTC</not-before>
+                <not-after>04- 5-2019 22:28 UTC</not-after>
+            </validity>
+            <public-key>
+                <public-key-algorithm>rsaEncryption</public-key-algorithm>
+                <public-key-length>1024</public-key-length>
+            </public-key>
+            <public-key-contents-list>
+                <key-contents>30:81:89:02:81:81:00:cf:d9:a0:20:54:3f:3e:4a:d6:72:db:88:c3
+                    36:3d:c5:b2:86:94:83:7f:45:6c:50:2d:b7:a4:a2:ee:cd:a6:56:8b
+                    38:b8:87:b4:92:94:5b:fe:e9:30:d3:0e:40:74:c4:a1:aa:2c:13:1c
+                    d2:c2:41:70:9d:40:81:50:99:35:5f:09:c1:f1:3b:e2:a9:58:eb:13
+                    4c:6b:0d:d3:40:ea:a7:b1:76:df:59:a4:f9:03:80:d8:8c:9b:c6:82
+                    45:06:42:30:76:e4:92:ea:9f:ad:a5:bd:da:fa:16:e6:cb:f2:0c:38
+                    5e:f0:fd:e6:6e:e6:cb:d4:35:28:95:fa:86:d4:7f:02:03:01:00:01
+                </key-contents>
+            </public-key-contents-list>
+            <signature-algorithm>sha256WithRSAEncryption</signature-algorithm>
+            <key-usage-list>
+            </key-usage-list>
+            <fingerprint>
+                <fingerprint-content>8c:e7:ed:57:e1:3d:72:26:11:5f:39:5c:af:6a:4a:b0:46:e7:1c:f6</fingerprint-content>
+                <fingerprint-hash-algorithm>sha1</fingerprint-hash-algorithm>
+                <fingerprint-content>b3:2b:4f:96:3a:a7:42:14:44:10:ac:96:6d:3a:1c:92</fingerprint-content>
+                <fingerprint-hash-algorithm>md5</fingerprint-hash-algorithm>
+            </fingerprint>
+            <auto-re-enrollment>
+                <auto-re-enrollment-status>Disabled</auto-re-enrollment-status>
+                <auto-re-enrollment-next-trigger-time>Timer not started</auto-re-enrollment-next-trigger-time>
+            </auto-re-enrollment>
+        </pkid-x509-certificate-information>
+    </x509-pki-certificate-info-list>
+    <cli>
+        <banner></banner>
+    </cli>
+</rpc-reply>

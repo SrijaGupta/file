@@ -1,0 +1,34 @@
+unittest_traffic:
+  ARGS:
+    - xyz: abc
+  TRAFFIC:
+    - server: [start, Yes]
+    - client: [start, Yes]
+    - client: [send, 302C0207075626C6963a01F0204public10201000201003011300F060B2B060104019918070900]
+    - server: [send, 30350207075626C6963a2000204010101 01020100020100301A3018060B2B0601040199180702]
+    - server:
+      - send
+      - var['xyz']aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    - client: [send_hex, 30 82 00 2f 02 01 00 04 08 69 6e 74 65 72 6e 61 6c a0 82 00 1e 02 02 72 4c]
+    - server: [check, presence]
+    - server: [check, dropped]
+    - client: [check, received]
+    - client: [close, Yes]
+    - server: [close, Yes]
+    - server: [check, absence]
+
+unittest_device_knobs:
+  TRAFFIC:
+    - attacker: [check, absence]
+
+unittest_action_knobs:
+  TRAFFIC:
+    - server: [apple, abcdefgh]
+
+unittest_server_fail:
+  TRAFFIC:
+    - server: [start, Yes]
+
+unittest_client_fail:
+  TRAFFIC:
+    - client: [start, Yes]

@@ -1,0 +1,245 @@
+VERIFY_TEMPLATE:
+    system_users_check:
+        args:  [ minimum_system_users]
+        cmd: show system user
+        xpath: //uptime-information
+        parameters:
+            active-user-count:
+                value: 'var[''minimum_system_users'']'
+                operator: is-gt 
+
+    check_configuration:
+        cmd: show configuration
+        xpath: /configuration
+        operator: exists 
+
+    check_pfe_stats_local_traffic:
+        args:  [ minimum_pfe_local_traffic]
+        cmd: show pfe statistics traffic
+        xpath: /pfe-statistics/pfe-local-traffic-statistics
+        parameters:
+            pfe-input-packets:
+                value: 'var[''minimum_pfe_local_traffic'']'
+                operator: is-gt 
+
+    check_system_local_time:
+        args:  [ lower_system_time , upper_system_time ]
+        cmd: show system uptime
+        DateTime:
+            xpath: /system-uptime-information/current-time/date-time/@seconds
+            #Has to be within 10 minutes of system_time
+            value: var['lower_system_time'] to var['upper_system_time']
+            operator: in-range 
+
+    check_no_chassis_alarms:
+        cmd: show chassis alarms
+        ChassisAlarmsNotActiveExists:
+            xpath: /alarm-information/alarm-summary/no-active-alarms
+            operator: exists
+            value: 0
+
+    check_no_system_alarms:
+        cmd: show system alarms
+        SystemAlarmsNotActiveExists:
+            xpath: /alarm-information/alarm-summary/no-active-alarms
+            operator: exists
+            value: 0
+
+    check_no_core_dumps:
+        cmd: show system core-dumps
+        FORMAT: text
+        REGEXP: '\/var\/crash+(.+)'
+        operator: regexp
+        value: 'No such file or directory'
+
+    check_partition:
+        args:  [ minimum_free_space ]
+        cmd: show system storage
+        AvailableSpace:
+            xpath: //filesystem-name[text()='/dev/ad0s1a']/../available-blocks
+            value: 'var[''minimum_free_space'']'  
+            operator: is-gt 
+
+    check_FPC_online:
+        cmd: show chassis fpc
+        xpath: /fpc-information/fpc
+        parameters:
+            state:
+                value: Online
+                operator: contains       
+                
+    check_toby_user_exists:
+        cmd: show configuration system login
+        FORMAT: text
+        REGEXP: '(user Toby)'
+        operator: regexp
+        value: 'user Toby'
+
+    check_timezone:
+        cmd: show configuration system
+        xpath: /rpc-reply/configuration/system/time-zone
+        value: Europe/Prague
+        operator: is-equal
+
+    check_my_toby_log_exists:
+        cmd: show log
+        FORMAT: text
+        REGEXP: 'my_(.+)_log.txt'
+        value: toby
+
+    check_max_configurations_on_flash:
+        cmd: show configuration system max-configurations-on-flash
+        xpath: /rpc-reply/configuration/system
+        parameters:
+            max-configurations-on-flash:
+                value: 5    
+                operator: is-equal
+
+    check_serial_alarms: 
+        cmd: show configuration
+        xpath: /rpc-reply/configuration/chassis/alarm/serial
+        parameters:
+            loss-of-tx-clock:
+                value: red
+                operator: is-equal   
+            loss-of-rx-clock:
+                value: red
+                operator: is-equal  
+
+    check_fpc_pic_status:
+        cmd: show chassis fpc pic-status
+        ChassisFPCPICStatusAllFPCOnline:
+            xpath: /fpc-information/fpc/state
+            operator: is-equal
+            value: "Online"
+        ChassisFPCPICStatusAllPICOnline:
+            xpath: /fpc-information/fpc/pic/pic-state
+            operator: is-equal
+            value: "Online"     
+
+    check_pfe_terse:
+        cmd: show pfe terse
+        PFETerseAllOnline:
+            # xpath: /pfe-information/pfe/mgmt-state
+            xpath: //mgmt-state
+            operator: is-equal
+            value: "Online"
+
+    check_pfe_statistics:
+        cmd: show pfe statistics traffic
+        xpath: /pfe-statistics
+        PFEStatisticsTrafficInputPPSGTIsGreaterThan:
+            xpath: /pfe-statistics/pfe-traffic-statistics/input-pps
+            value: 0
+            operator: is-gt
+        PFEStatisticsTrafficOutputPPSGTIsGreaterThan:
+            xpath: /pfe-statistics/pfe-traffic-statistics/output-pps
+            value: 0
+            operator: is-gt
+
+    check_ping:
+        args: [ip, count: 10]
+        cmd: ping var['ip'] count var['count']
+        cmd_timeout: 200
+        format: text
+        regexp: '(\d+)\s+packets\s+transmitted,\s+(\d+)\s+packets\s+received,\s+(\d+)\%\spacket\sloss'
+        packet loss:
+            group: 3
+            value: 0
+            operator: is-lt-or-equal
+
+    check_ping_rapid:
+        args: [ip, count: 10]
+        cmd: ping var['ip'] count var['count'] rapid
+        cmd_timeout: 200
+        format: text
+        regexp: '(\d+)\s+packets\s+transmitted,\s+(\d+)\s+packets\s+received,\s+(\d+)\%\spacket\sloss'
+        packet loss:
+            group: 3
+            value: 0
+            operator: is-lt-or-equal
+
+     # PFEStatisticsTrafficLocalStatisticsInputControlDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/software-input-control-drops
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficLocalStatisticsInputHighDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/software-input-high-drops
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficLocalStatisticsInputMediumDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/software-input-medium-drops
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficLocalStatisticsInputLowDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/software-input-low-drops
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficLocalStatisticsOutputLowDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/software-output-low-drops
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficLocalStatisticsHardwareInputDropsIsEqual:
+     #     xpath: /pfe-statistics/pfe-local-traffic-statistics/hardware-input-drops
+     #     value: 100000
+     #     operator: is-lt
+     # PFEStatisticsTrafficHardwareDiscardStatisticsTimeoutIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/timeout-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsTruncatedKeyIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/truncated-key-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsBitsToTestIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/bits-to-test-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsDataErrorIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/data-error-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsStackUnderflowIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/stack-underflow-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsStackOverflowIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/stack-overflow-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsInvalidIIFIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/invalid-iif-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsInfoCellIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/info-cell-discard
+     #     value: 0
+     #     operator: is-equal
+     # PFEStatisticsTrafficHardwareDiscardStatisticsFabricIsEqual:
+     #     xpath: /pfe-statistics/pfe-hardware-discard-statistics/fabric-discard
+     #     value: 0
+     #     operator: is-equal
+
+
+    check_interfaces_status:
+        args:  [ interface, admin_status, oper_status ]
+        cmd: show interfaces var['interface'] extensive
+        xpath: /interface-information/physical-interface
+        parameters:
+            admin-status:
+                value: 'var[''admin_status'']'
+                operator: is-equal 
+            oper-status:
+                value: 'var[''oper_status'']'
+                operator: is-equal 
+
+    check_ntp_associations:
+        args:  [ server ]
+        cmd: show ntp associations
+        format: text
+        grep: '\*var[''server'']'
+        operator: count-is-equal
+        value: 1
+        iterate_until:
+            interval: 10
+            timeout: 180

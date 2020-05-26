@@ -1,0 +1,38 @@
+.\" Manpage for Toby Exit Codes
+.\" Contact selvat@juniper.net to correct errors or typos
+.TH man 1 "20 Aug 2019"
+.SH FEATURE
+Toby Exit Codes
+.SH SYNOPSIS
+The Toby Exit Codes allows the users to categorize the root cause of the failure
+.SH DESCRIPTION
+
+Following are the available exit codes in Toby
+.TS
+tab(;) allbox;
+l l
+l l
+l ld.
+COMMAND_TIMEOUT;Supplied pattern(expected prompt pattern) is not received for the executed command within specified timeout
+DEVICE_UNREACHABLE;Device is not reachable/Device connectivity related issues
+CONNECT_LOST;Toby device handle lost the connection to execute further
+CONNECT_FAIL;Device credentials/authentication related issues leads to it
+LINK_FAIL;Any interfaces down leads to this error code if fv-interface-status-check is set to enable
+SPIRENT_LICENSE_ERROR;Occurs if issues are related to Spirent license
+SPIRENT_CONNECT_ERROR;Toby is unable to connect to spirent chassis or unable to fetch version from the spirent chassis
+SPIRENT_INVOKE_ERROR;Occurs if any issues with native spirent invoke() API call
+SPIRENT_LABSERVER_CONNECT_ERROR;Occurs if any issues with spirent labserver
+SPIRENT_CHASSIS_CONNECT_ERROR;Occurs if any issues with native spirent connect() API call
+IXIA_CONNECT_ERROR;Toby is unable to connect to ixia chassis/appserver or unable to fetch version from the ixia chassis
+CONNECTION_CLOSED;Trying to execute a command on the gracefully closed device handle
+DEVICE_PORT_UNREACHABLE;Device Port (Port 22,23 or specified port) is unreachable
+DEVICE_MODE_SWITCH_TIMEOUT;Not able to switch to the specific mode(Cli/shell/vty/cty) within standard timeout
+CUSTOM_PATTERN_NOT_FOUND;Passed pattern not found in the device response
+.TE
+
+.SH SEE ALSO
+toby, t, config engine, verification engine, monitoring engine
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Selvarajan Thanabal (selvat@juniper.net)

@@ -1,0 +1,87 @@
+<rpc-reply xmlns:junos="http://xml.juniper.net/junos/15.1X49/junos">
+    <multi-routing-engine-results>
+        
+        <multi-routing-engine-item>
+            
+            <re-name>node0</re-name>
+            
+            <x509-pki-certificate-info-list xmlns="http://xml.juniper.net/junos/15.1X49/junos-pki">
+                <pkid-x509-certificate-information junos:style="detail">
+                    <identifier>localcert1</identifier>
+                    <version>3</version>
+                    <serial-number-list>
+                        <serial-number-x509>021d491b</serial-number-x509>
+                    </serial-number-list>
+                    <issuer-name>
+                        <distinguished-name>
+                            <organization-name>juniper</organization-name>
+                            <common-name>root-ca</common-name>
+                            <country-name>us</country-name>
+                        </distinguished-name>
+                    </issuer-name>
+                    <subject-name>
+                        <distinguished-name>
+                            <country-name>US</country-name>
+                        </distinguished-name>
+                    </subject-name>
+                    <subject-string-list>
+                        <subject-string>C=US</subject-string>
+                    </subject-string-list>
+                    <alternate-subject-list>
+                        <alternate-subject>email empty</alternate-subject>
+                        <alternate-subject>fqdn empty</alternate-subject>
+                        <alternate-subject>1.1.1.1</alternate-subject>
+                        <alternate-subject>ipv6 empty</alternate-subject>
+                    </alternate-subject-list>
+                    <validity>
+                        <not-before>04- 5-2018 22:04 UTC</not-before>
+                        <not-after>07-15-2066 22:13 UTC</not-after>
+                    </validity>
+                    <public-key>
+                        <public-key-algorithm>rsaEncryption</public-key-algorithm>
+                        <public-key-length>2048</public-key-length>
+                    </public-key>
+                    <public-key-contents-list>
+                        <key-contents>30:82:01:0a:02:82:01:01:00:e1:f5:4f:8c:54:1a:6d:84:4e:5d:1c
+                            f4:f1:86:96:c6:e0:f6:37:de:1b:78:2d:a1:9b:bc:be:e1:3a:96:8c
+                            e8:4e:a3:51:cd:7d:ad:24:d4:0b:0e:5b:4e:7b:f1:4a:42:9c:6f:81
+                            85:97:85:bb:74:ca:3b:78:21:e9:88:bf:9d:0d:9d:ec:c1:66:b7:ff
+                            d9:07:c1:80:a3:56:53:5c:50:3a:c5:8b:d5:43:10:dc:91:22:27:33
+                            63:dd:3d:fb:b6:db:13:d9:2c:c9:6c:09:2f:12:ac:59:39:be:cd:ce
+                            fc:df:8e:89:bf:02:ad:0e:90:8e:66:90:15:33:b7:76:b4:91:5c:6c
+                            5a:4e:ba:04:7b:67:54:f3:13:73:88:6b:39:d2:0c:da:7e:3c:12:b0
+                            5d:2f:e3:5b:9c:ef:76:7b:99:9c:d9:07:d5:3e:a3:72:9a:23:f2:1b
+                            ac:d8:76:d2:93:60:ec:df:0f:a0:8a:43:7a:41:f8:6a:dd:b1:19:c2
+                            ff:50:cc:f9:09:1a:27:c7:52:e3:1d:8b:92:cb:d2:ad:55:6e:5a:c0
+                            5c:6f:f6:f1:80:aa:b0:9e:e8:e7:b5:ef:7c:09:06:e2:33:ff:3e:25
+                            0c:8e:3f:b0:2d:0d:7d:02:63:c7:0a:f1:aa:d4:a3:ca:0e:18:c6:6d
+                            14:f8:31:56:8d:02:03:01:00:01</key-contents>
+                        </public-key-contents-list>
+                        <signature-algorithm>sha256WithRSAEncryption</signature-algorithm>
+                        <distribution-crl-list>
+                            <distribution-crl>http://10.155.22.189:8080/crl-as-der/currentcrl-20.crl?id=20</distribution-crl>
+                        </distribution-crl-list>
+                        <authority-information-access-ocsp-list>
+                            <authority-information-access-ocsp>http://10.155.22.189:8090/ca-advpn/</authority-information-access-ocsp>
+                        </authority-information-access-ocsp-list>
+                        <key-usage-list></key-usage-list>
+                        <fingerprint>
+                            <fingerprint-content>3a:25:ab:b0:51:93:a8:42:a2:dc:e4:1e:37:1e:13:7f:83:ad:46:59</fingerprint-content>
+                            <fingerprint-hash-algorithm>sha1</fingerprint-hash-algorithm>
+                            <fingerprint-content>2a:aa:c8:e9:ca:08:f9:fe:a2:45:4b:61:b5:11:ab:4d</fingerprint-content>
+                            <fingerprint-hash-algorithm>md5</fingerprint-hash-algorithm>
+                        </fingerprint>
+                        <auto-re-enrollment>
+                            <auto-re-enrollment-status>Disabled</auto-re-enrollment-status>
+                            <auto-re-enrollment-next-trigger-time>Timer not started</auto-re-enrollment-next-trigger-time>
+                        </auto-re-enrollment>
+                    </pkid-x509-certificate-information>
+                </x509-pki-certificate-info-list>
+            </multi-routing-engine-item>
+            
+        </multi-routing-engine-results>
+        <cli>
+            <banner>{primary:node0}</banner>
+        </cli>
+    </rpc-reply>
+

@@ -1,0 +1,11 @@
+[{
+   		"component_id": 65535,
+   		"timestamp": 1491001840423,
+   		"time": "2017-03-31T23:10:41.977073585Z",
+   		"jkey": "abc",
+   		"system_id": "10.220.13.245",
+   		"path": "sensor_1000:/junos/task-memory-information/:/junos/task-memory-information/:xmlproxyd",
+   		"jvalue": "20",
+   		"__junos_re_stream_creation_timestamp__": 1491001840276,
+   		"sequence_number": 0
+   	}]

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 3.0.4 (Python 3.7.3 on darwin)" generated="20200515 14:51:58.386">
+<suite id="s1" name="Common" source="/Users/srigupta/Desktop/git/file/NITA/common.robot">
+<kw name="Toby Suite Setup" type="setup">
+<msg timestamp="20200515 14:51:59.221" level="FAIL">No keyword with name 'Toby Suite Setup' found.</msg>
+<status status="FAIL" starttime="20200515 14:51:59.221" endtime="20200515 14:51:59.221"></status>
+</kw>
+<test id="s1-t1" name="T1.1: CHECK SYSTEM USER">
+<doc>Objective: Check there are users in the system</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+<tag>USER</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.221" endtime="20200515 14:51:59.222" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t2" name="T1.2: CHECK CONFIGURATION">
+<doc>Objective: Check configuration for the device</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>CONFIGURATION</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.222" endtime="20200515 14:51:59.222" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t3" name="T1.3: SHOW PFE STATISTICS LOCAL TRAFFIC">
+<doc>Objective: Check PFE statistics</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.222" endtime="20200515 14:51:59.223" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t4" name="T1.5: CHECK NO CHASSIS ALARMS">
+<doc>Objective: Check there are no chassis alarms</doc>
+<tags>
+<tag>ALARMS</tag>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.223" endtime="20200515 14:51:59.223" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t5" name="T1.6: CHECK NO SYSTEM ALARMS">
+<doc>Objective: Check there are no system alarms</doc>
+<tags>
+<tag>ALARMS</tag>
+<tag>COMMON</tag>
+<tag>RESEARCH</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.223" endtime="20200515 14:51:59.224" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t6" name="T1.7: CHECK NO CORE DUMPS PRESENT">
+<doc>Objective: Check there are no core dumps present</doc>
+<tags>
+<tag>ALARMS</tag>
+<tag>COMMON</tag>
+<tag>CORE_DUMPS</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.224" endtime="20200515 14:51:59.224" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t7" name="T1.8: CHECK '/dev/ad0s1a' PARTITION HAVE ENOUGH FREE SPACE FOR UPGRADE">
+<doc>Objective: Check '/dev/ad0s1a' partition have at least 400MB for upgrade</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.224" endtime="20200515 14:51:59.224" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t8" name="T1.9: CHECK FPC IS ONLINE">
+<doc>Objective: Check FPC is Online</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.225" endtime="20200515 14:51:59.225" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t9" name="T1.10: ADD TOBY USER">
+<doc>Objective: Add new user Toby with password NitaToby</doc>
+<tags>
+<tag>ALE</tag>
+<tag>COMMON</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.225" endtime="20200515 14:51:59.225" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t10" name="T1.15: CREATE NEW SYSLOG FILE FOR ALL EVENTS OF ALL PRIORITIES">
+<doc>Objective: Create my_toby_log.txt to store all syslog messages of JunOS device and limit rollback to 5 configurations</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>ROLLBACK</tag>
+<tag>SYSLOG</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.225" endtime="20200515 14:51:59.226" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<test id="s1-t11" name="T1.23: CHECK PACKET FORWARDING ENGINE TERSE">
+<doc>Objective: Check pfe terse statistics</doc>
+<tags>
+<tag>COMMON</tag>
+<tag>SERIAL</tag>
+<tag>SYSTEM</tag>
+</tags>
+<status status="FAIL" starttime="20200515 14:51:59.226" endtime="20200515 14:51:59.226" critical="yes">Parent suite setup failed:
+No keyword with name 'Toby Suite Setup' found.</status>
+</test>
+<kw name="Toby Suite Teardown" type="teardown">
+<msg timestamp="20200515 14:51:59.229" level="FAIL">No keyword with name 'Toby Suite Teardown' found.</msg>
+<status status="FAIL" starttime="20200515 14:51:59.229" endtime="20200515 14:51:59.229">No keyword with name 'Toby Suite Teardown' found.</status>
+</kw>
+<doc>Suites of tests to be executed on all devices of the NITA topology.</doc>
+<status status="FAIL" starttime="20200515 14:51:58.387" endtime="20200515 14:51:59.229">Suite setup failed:
+No keyword with name 'Toby Suite Setup' found.
+
+Also suite teardown failed:
+No keyword with name 'Toby Suite Teardown' found.</status>
+</suite>
+<statistics>
+<total>
+<stat pass="0" fail="11">Critical Tests</stat>
+<stat pass="0" fail="11">All Tests</stat>
+</total>
+<tag>
+<stat pass="0" fail="3">ALARMS</stat>
+<stat pass="0" fail="1">ALE</stat>
+<stat pass="0" fail="11">COMMON</stat>
+<stat pass="0" fail="1">CONFIGURATION</stat>
+<stat pass="0" fail="1">CORE_DUMPS</stat>
+<stat pass="0" fail="1">RESEARCH</stat>
+<stat pass="0" fail="1">ROLLBACK</stat>
+<stat pass="0" fail="1">SERIAL</stat>
+<stat pass="0" fail="1">SYSLOG</stat>
+<stat pass="0" fail="11">SYSTEM</stat>
+<stat pass="0" fail="1">USER</stat>
+</tag>
+<suite>
+<stat pass="0" fail="11" id="s1" name="Common">Common</stat>
+</suite>
+</statistics>
+<errors>
+<msg timestamp="20200515 14:51:58.417" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Importing test library '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/config/config.py' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  File "/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/config/config.py", line 15, in &lt;module&gt;
+    from jnpr.toby.engines.config.config_template_v2 import ConfigEngine as ConfigEngine2
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:58.419" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Test library '/Users/srigupta/Desktop/git/filr/Nita/lib/jnpr/toby/engines/monitor/MonitoringEngine.py' does not exist.</msg>
+<msg timestamp="20200515 14:51:59.180" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Importing test library '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/macro/cmd_macro.py' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  File "/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/macro/cmd_macro.py", line 17, in &lt;module&gt;
+    from jnpr.toby.hldcl.device import execute_cli_command_on_device as cli
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.188" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Importing test library '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/events/eventEngine.py' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  File "/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/events/eventEngine.py", line 23, in &lt;module&gt;
+    from jnpr.toby.utils.Vars import Vars
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.196" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Importing test library '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/utils/parallel.py' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  File "/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/utils/parallel.py", line 13, in &lt;module&gt;
+    from jnpr.toby.utils.utils import run_multiple
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.200" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/lib/jnpr/toby/Master.robot': Importing test library '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/logger/logger.py' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  File "/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/logger/logger.py", line 8, in &lt;module&gt;
+    from jnpr.toby.exception.toby_exception import TobyFileIOException
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.206" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/engines/verification/verification.robot': Test library 'jnpr/toby/engines/verification/verifyEngine.py' does not exist.</msg>
+<msg timestamp="20200515 14:51:59.208" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/toby.robot': Test library 'jnpr/toby/init/init.py' does not exist.</msg>
+<msg timestamp="20200515 14:51:59.210" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/toby.robot': Importing test library 'jnpr.toby.hldcl.device' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  None
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.210" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/toby.robot': Importing test library 'jnpr.toby.hldcl.trafficgen.trafficgen' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  None
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.210" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/Nita/lib/jnpr/toby/toby.robot': Importing test library 'jnpr.toby.hldcl.host' failed: ModuleNotFoundError: No module named 'jnpr.toby'
+Traceback (most recent call last):
+  None
+PYTHONPATH:
+  /usr/local/bin
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python37.zip
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/lib-dynload
+  /Users/srigupta/Library/Python/3.7/lib/python/site-packages
+  /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/site-packages
+  /Library/Python/3.7/site-packages</msg>
+<msg timestamp="20200515 14:51:59.218" level="ERROR">Error in file '/Users/srigupta/Desktop/git/file/NITA/common.robot': Test library 'jnpr/toby/hardware/chassis/chassis.py' does not exist.</msg>
+</errors>
+</robot>

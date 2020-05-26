@@ -1,0 +1,52 @@
+verify_jvision:
+    ARGS: [intf : ae1.13, attr : timestamp]
+    ospf_hello_interval:
+        ARGS: [attr : jvalue]
+        jkey: /junos/ospf/interface[name='var['intf']']/hello-interval
+        attribute: var['attr']
+        operator: is-equal
+        value: 20
+        records: 0
+    intf_admint_state_1:
+        ARGS: [attr : jvalue]
+        jkey: /interfaces/interface[name='ae1']/subinterfaces/subinterface[index='2']/state/admin-status
+        attribute: var['attr']
+        operator: is-equal[ignorecase]
+        value: DOWN
+        records: -1
+    intf_admint_state_2:
+        jkey: /interfaces/interface[name='tv['device0__intf1__pic']']/state/admin-status
+        attribute: jvalue
+        operator: is-equal[ignorecase]
+        value: UP
+        records: -1
+    intf_admint_state_using_tv:
+        jkey: /interfaces/interface[name='tv['device0__intf1__pic']']/state/admin-status
+        attribute: jvalue
+        operator: is-equal[ignorecase]
+        value: up
+        records: -1
+    mtu_check_strict:
+       jkey: /interfaces/interface[name='ae0']/subinterfaces/subinterface[index='2']/state/mtu
+       attribute: jvalue
+       operator: switch-value
+       value: [1500, 9000, 4700, 1500]
+       records: all
+    mtu_check_loose:
+       jkey: /interfaces/interface[name='ae0']/subinterfaces/subinterface[index='2']/state/mtu
+       attribute: jvalue
+       operator: switch-value[loose]
+       value: [1500, 4700, 1500]
+       records: all
+    ospf_hello_interval_1:
+       jkey: /junos/ospf/interface[name='ae1.13']/hello-interval
+       attribute: var['attr'][delta]
+       operator: is-lt
+       value: 2
+       records: all
+    ospf_hello_interval_pattern:
+       jkey_pattern: /junos/ospf/interface\[name='ae1.13'\]/.*
+       attribute: var['attr'][delta]
+       operator: is-lt
+       value: 5
+       records: all

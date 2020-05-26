@@ -1,0 +1,158 @@
+CHASSIS_CONFIGURATION : {
+    'pattern' : 'member.*|node.*|bsys-re.*|gnf2-re.*'
+}
+
+MODULE_CONFIGURATION : {
+    'Chassis' : {
+        'name' : 'Chassis',
+        'pattern' : 'Chassis',
+        'file' : 'chassis',
+        'key' : 'chassis',
+        'index' : False
+    },
+    'Routing Engine' : {
+        'name' : 'Routing Engine',
+        'pattern' : 'Routing Engine.*',
+        'file' : 'routing_engine',
+        'key' : 're',
+        'index' : True
+    },
+    'Line Card' : {
+        'name' : 'Line Card',
+        'pattern' : 'FPC.*',
+        'file' : 'fpc',
+        'key' : 'fpc',
+        'index' : True
+    },
+    'Interface Card' : {
+        'name' : 'Interface Card',
+        'pattern' : 'PIC.*',
+        'file' : 'pic',
+        'key' : 'pic',
+        'index' : True
+    },
+    'Modular Interface Card' : {
+        'name' : 'Modular Interface Card',
+        'pattern' : 'MIC.*',
+        'file' : 'mic',
+        'key' : 'mic',
+        'index' : True
+    },
+    'Power Supply' : {
+        'name' : 'Power Supply',
+        'pattern' : 'Power Supply.*|PEM.*|PDU.*|PSM.*',
+        'file' : 'power',
+        'key' : 'ps',
+        'index' : True
+    },
+    'Fan Tray' : {
+        'name' : 'Fan Tray',
+        'pattern' : 'Fan Tray.*',
+        'file' : 'fantray',
+        'key' : 'ft',
+        'index' : True
+    },
+    'Fabric' : {
+        'name' : 'Fabric',
+        'pattern' : 'SFB.*|SIB.*',
+        'file' : 'fabric',
+        'key' : 'fab',
+        'index' : True
+    },
+    'Control Board' : {
+        'name' : 'Control Board',
+        'pattern' : 'CB.*',
+        'file' : 'cb',
+        'key' : 'cb',
+        'index' : True
+    }
+}
+
+OVERRIDE_CONFIGURATION : {
+    'Chassis' : {
+        'name' : 'Chassis',
+        'key' : 'chassis',
+        'override' : {
+            'Routing Engine' : {
+                'override_pattern' : '_override_re_',
+                'name' : 'Routing Engine',
+                'key' : 're'
+            },
+            'Line Card' : {
+                'override_pattern' : '_override_fpc_',
+                'name' : 'Line Card',
+                'key' : 'fpc'
+            },
+            'Fan Tray' : {
+                'override_pattern' : '_override_ft_',
+                'name' : 'Fan Tray',
+                'key' : 'ft'
+            },
+            'Power Supply' : {
+                'override_pattern' : '_override_ps_',
+                'name' : 'Power Supply',
+                'key' : 'ps'
+            }
+        }
+    },
+    'Routing Engine' : {
+        'name' : 'Routing Engine',
+        'key' : 're',
+        'override' : {
+            'Chassis' : {
+                'override_pattern' : '_override_chassis_',
+                'name' : 'Chassis',
+                'key' : 'chassis',
+                'merge_local' : True
+            }
+        }
+    },
+    'Fan Tray' : {
+        'name' : 'Fan Tray',
+        'key' : 'ft',
+        'override' : {
+            'Chassis' : {
+                'override_pattern' : '_override_chassis_',
+                'name' : 'Chassis',
+                'key' : 'chassis',
+                'merge_local' : True
+            }
+        }
+    },
+    'Power Supply' : {
+        'name' : 'Power Supply',
+        'key' : 'ps',
+        'override' : {
+            'Chassis' : {
+                'override_pattern' : '_override_chassis_',
+                'name' : 'Chassis',
+                'key' : 'chassis',
+                'merge_local' : True
+            }
+        }
+    },
+    'Control Board' : {
+        'name' : 'Control Board',
+        'key' : 'cb',
+        'override' : {
+            'Chassis' : {
+                'override_pattern' : '_override_chassis_',
+                'name' : 'Chassis',
+                'key' : 'chassis',
+                'merge_local' : True
+            }
+        }
+    },
+    'Line Card' : {
+        'name' : 'Line Card',
+        'key' : 'fpc',
+        'override' : {
+            'Interface Card' : {
+                'override_pattern' : '_override_pic_',
+                'name' : 'Interface Card',
+                'key' : 'pic'
+            }
+        }
+    }
+}
+

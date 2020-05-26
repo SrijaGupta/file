@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+import sys
+import os
+import time
+import re
+import getopt
+import subprocess
+import robot
+homedir = os.environ['HOME']
+re.sub('[\s+]', '', homedir)
+global_dict = {
+    'score'  : '9.5',
+    'rc-file' : '/volume/labtools/lib/pylintrc',
+    'module-starting-path' : homedir
+}
+skip_list = ['jnpr/toby/hldcl/', 'jnpr/toby/init/', 'jnpr/toby/logging/', 'jnpr/toby/engines/']
+master_check_list = ['toby.robot', 'init.py', 'device.py', 'device.robot']
+
+
+popenobj = os.popen('which pylint')
+popenobj1 = os.popen('which rflint')
+pylint_path = popenobj.read()
+rflint_path = popenobj1.read()
+
+if pylint_path:
+    global_dict['pylint-path'] = pylint_path.rstrip('\n\t')
+if rflint_path:
+    global_dict['rflint-path'] = rflint_path.rstrip('\n\t')
+
+popenobj.close()
+popenobj1.close()
+
+if 'pylint-path' not in global_dict:
+    print("[ERROR ]  pylint not installed !! please install pylint\n")
+    sys.exit(2)
+if 'rflint-path' not in global_dict:
+    print("[WARNING] rflint not installed !! please install rflint\n")
+    time.sleep(2)
+if os.path.join(os.path.dirname(robot.__file__)):
+    robot_lib_path = os.path.join(os.path.dirname(robot.__file__), 'libraries/')
+    if robot_lib_path and robot_lib_path not in sys.path:
+        sys.path.append(robot_lib_path)
+
+report = {}
+script_list = []
+scripts = []
+py_list_all = []
+script = ''
+cmd = ''
+
+
+usage = '''
+    Purpose: toby-lint need to validate toby scripts. 
+    Usage: toby-lint [arguments] <file.[robot|py]> 
+
+        example:   toby-lint test.robot --recurse all
+        -r | --recurse <min|all|robot>   Recursively check any 'Library' calls in Robot as well as 'import'
+                                         libraries specified in python modules.  
+                                           robot:  only robot files
+                                           min:  exclude Toby core, init, and engine libraries
+                                           all:  include Toby core, init, and engine libraries 
+                                         Note:   recurse will not check native python modules like YAML
+        -h|--help                        help
+'''
+
+
+
+#Running pylint on .py script and rflint on .robot scripts
+def run_pylint_rflint(lint, script):
+    if lint == "rflint":
+        if 'rflint-path' in global_dict:
+            print("[INFO ] Using config file: %s " % global_dict['rflint-path'])
+            print("[INFO ] Running rflint on: %s " % script)
+            print("[INFO ] Basic files sanity check: \n")
+            child_proc = subprocess.Popen("%s %s " % (global_dict['rflint-path'], script) +' 2>&1', stdout=subprocess.PIPE, shell=True)
+        else:
+            print("[WARNING ] rflint not installed !! please install rflint\n")
+    if lint == "pylint":
+        print("[INFO ] Using config file: %s " % global_dict['pylint-path'])
+        print("[INFO ] Running pylint on: %s " % script)
+        print("[INFO ] Basic files sanity check: \n")
+        child_proc = subprocess.Popen("%s --rcfile=%s  %s " % (global_dict['pylint-path'],\
+        global_dict['rc-file'], script) +' 2>&1', stdout=subprocess.PIPE, shell=True)
+    output = child_proc.stdout.read()
+    return output
+
+
+def generate_report(script, output):
+    report[script] = {}
+    report[script]['ERROR'] = []
+    report[script]['WARNING'] = []
+    report[script]['convention'] = []
+    report[script]['RATING'] = ''
+    output = output.decode('UTF-8')
+    for oline in output.split('\n'):
+        if not re.match(r'^\s*$', oline):
+            if re.search(r'^E:', oline):
+                report[script]['ERROR'].append(oline)
+            if re.search(r'^W:', oline):
+                report[script]['WARNING'].append(oline)
+            if re.search(r'^C:', oline):
+                report[script]['convention'].append(oline)
+            match = re.search(r'Your code has been rated at (\d*\.\d*)\/10', oline)
+            if match:
+                scriptrating = match.group(1)
+                report[script]['RATING'] = scriptrating
+    return report
+
+
+
+def is_jnpr_module(module):
+    try:
+        module_path = __import__(module).__file__
+    except:
+        print("[WARN ] Oops! module: \"%s\" not set, skipping..." % module)
+        return False
+    match = re.search(global_dict['module-starting-path'], module_path)
+    if match:
+        return True
+    else:
+        return False
+
+
+def create_summary_report(script, script_list, cmd, ERROR_count, report):
+    print("=============================================================")
+    print("                            Summary                          ")
+    print("=============================================================\n")
+    print("[INFO ] Script (s)  : %s " % script)
+    print("[INFO ] Command   :  %s \n" % cmd)
+    print("Summary Logs:")
+    print("=============\n")
+    for script in script_list:
+        print("Script  : %s " % script)
+        print("============================================")
+
+        if 'ERROR' in report[script]:
+            for E in report[script]['ERROR']:
+                print("[ERROR] %s " % E)
+                ERROR_count += 1
+        if 'WARNING' in report[script]:
+            for W in report[script]['WARNING']:
+                print("[WARN ] %s " % W)
+        if 'RATING' in report[script] and report[script]['RATING']:
+            if report[script]['RATING'] < global_dict['score']:
+                print("[ERROR] Your code has been rated at  %s /10   " % report[script]['RATING'])
+                ERROR_count += 1
+            else:
+                print("[INFO ] Your code has been rated at  %s /10   " % report[script]['RATING'])
+        print("\n\n")
+    if ERROR_count == 0:
+        print("Lint check passed.\n")
+    else:
+        print("Lint check failed with %d errors. \n" % ERROR_count)
+
+def exit_from_lint(ERROR_count):
+    print("\n\n")
+    if ERROR_count == 0:
+        print("Lint check passed.\n")
+    else:
+        print("Lint check failed with %d errors. \n" % ERROR_count)
+    sys.exit()
+
+def get_path(script):
+    script = script.rstrip() 
+    if script.endswith('.robot') or script.endswith('.py'):
+        if script.count('.') > 1:
+           script = script.replace('.', '/', script.count('.')-1)
+    absolute_path = None
+    for base_path in sys.path:
+        if os.path.isfile(os.path.join(base_path, script)):
+            absolute_path = os.path.join(base_path, script)
+            break
+    if absolute_path is None:
+        print('[WARN ] Unable to locate \"%s\" skipping!' % script)
+    return absolute_path 
+    
+ 
+
+def main():
+    recurse = ''
+    rf_scripts = ''
+    py_script_flg = 0
+    open_onces_flag = 0
+    py_robo_list = []
+    ERROR_count = 0
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "r:h", ["help", "recurse="])
+    except getopt.GetoptError:
+        print(usage)
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(usage)
+            sys.exit()
+        elif opt in ("-r", "--recurse"):
+            recurse = arg
+    if(recurse and recurse != 'all' and recurse != 'min' and recurse != 'robot'):
+        print("[ERROR] recurse should <all|min|robot>")
+        print(usage)
+        sys.exit()
+    if len(args) > 0:
+        rf_scripts = args[0]
+    cmd = " ".join(sys.argv[:])
+##############################
+    if rf_scripts:
+        scripts = rf_scripts.split(",")
+        for script in scripts:
+            basepath = os.path.dirname(os.path.abspath(script))
+            if basepath and basepath not in sys.path:
+                sys.path.insert(0, basepath)
+            py_list = []
+            if (re.search(r'.robot', script)):
+                script_list.append(script)
+                fcontains = open(script, "r")
+                for line in fcontains:
+                    match_ro = re.search(r'^\s*Resource\s+(.+)', line)
+                    if match_ro:
+                        robot_script = get_path(match_ro.group(1))
+                        if robot_script is None:
+                            continue
+                        base_robo = os.path.basename(robot_script)
+                        py_robo_list.append(base_robo.lower())
+                        if recurse == 'min':
+                            if(not any(map(lambda skip: re.search(skip, match_ro.group(1), re.I), skip_list))):
+                                if robot_script not in scripts:
+                                    scripts.append(robot_script)
+                        else:
+                            if robot_script not in scripts:
+                                scripts.append(robot_script)
+                    match = re.search(r'^\s*Library\s+(.+)', line)
+                    if match:
+                        py_script = match.group(1)
+                        if recurse == 'min':
+                            if(not any(map(lambda skip: re.search(skip, match.group(1), re.I), skip_list))):
+                                if py_script  not in py_list_all:
+                                    py_list.append(py_script)
+                                    py_list_all.append(py_script)
+                        elif recurse != 'robot':
+                            if py_script not in py_list_all:
+                                py_list.append(py_script)
+                                py_list_all.append(py_script)
+                        base_py = os.path.basename(py_script)
+                        py_robo_list.append(base_py.lower())
+                for path in py_list_all:
+                    path_tokens = path.split(sep='/')
+                    if 'test-suites' in path_tokens:
+                        print("[ERROR ] Python file sourced from test-suites folder.","Sourced Path = " +path)
+                        ERROR_count += 1
+                    else:
+                        continue
+                fcontains.close()
+                if(open_onces_flag == 0):
+                    if "master.robot" in py_robo_list:
+                        if any(x in master_check_list for x in py_robo_list):
+                            print("[ERROR] %s should not be used when master.robot is imported,\n"\
+                                " since it is already present in master.robot.! exiting \n"\
+                            % ','.join(filter(lambda x: x in master_check_list, py_robo_list)))
+                            ERROR_count += 1
+                            exit_from_lint(ERROR_count)
+                    #else:
+                    #    if "toby.robot" not in py_robo_list and "init.py" not in py_robo_list:
+                    #        print("[ERROR] Either master.robot or init.py import is mandatory.! exiting \n")
+                    #        ERROR_count += 1
+                    #        exit_from_lint(ERROR_count)
+                open_onces_flag = 1
+                output = run_pylint_rflint("rflint", script)
+                generate_report(script, output)
+            elif(re.search(r'.py', script)):
+                py_script_flg = 1
+                py_list.append(script)
+                py_list_all.append(script)
+            for py in py_list:
+                if not py.endswith('.py'):
+                    py = str(py)+'.py'
+                py = get_path(py)
+                if py is None:
+                    continue
+                obj = os.popen('ls %s' % py)
+                if obj.read():
+#                if os.popen('ls %s' % py).read():
+                    script_list.append(py)
+                    output = run_pylint_rflint("pylint", py)
+                    generate_report(py, output)
+                    if recurse:
+                        pycontains = open(py, "r")
+                        for pyline in pycontains:
+                            modul_match = re.search(r'^\s*import\s+(\S+)', pyline) or re.search(r'^\s*from\s+(\S+)\s+import', pyline)
+                            if modul_match:
+                                module = modul_match.group(1)
+                                if is_jnpr_module(module):
+                                    script_list.append(module)
+                                    output = run_pylint_rflint("pylint", module)
+                                    generate_report(module, output)
+                        pycontains.close()
+                else:
+                    print("[WARNING]: %s doesn't exist !! " % py)
+                obj.close()
+        if "toby.robot" not in py_robo_list and "init.py" not in py_robo_list:
+            print("[ERROR] Either master.robot or init.py import is mandatory.! exiting \n")
+            ERROR_count += 1
+            exit_from_lint(ERROR_count)
+    create_summary_report(rf_scripts, script_list, cmd, ERROR_count, report)
+
+
+
+if __name__ == '__main__':
+    main()

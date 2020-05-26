@@ -1,0 +1,100 @@
+## Event Engine Builtin Events
+on_cli:
+    trigger:
+        method: jnpr.toby.utils.triggers.on_cli
+        args: ['dh', 'command', '**kwargs']
+    #check:
+        #method: ROBOT:verify
+        #args:
+
+on_config:
+    trigger:
+        method: jnpr.toby.utils.triggers.on_config
+        args: ['dh', 'command', '**kwargs']
+
+on_shell:
+    trigger:
+        method: jnpr.toby.utils.triggers.on_shell
+        args: ['dh', 'command', '**kwargs']
+
+on_vty:
+    trigger:
+        method: jnpr.toby.utils.triggers.on_vty
+        args: ['dh', 'command', 'ifd', '**kwargs']
+        
+on_cli-pfe:
+    trigger:
+        method: jnpr.toby.utils.triggers.on_clipfe
+        args: ['dh', 'command', '**kwargs']
+
+flap_interface:
+    trigger:
+        method: jnpr.toby.interfaces.interface_triggers.flap_interface
+        args: ['dh', 'interface', '**kwargs']
+    check:
+        method: jnpr.toby.interfaces.interface_triggers.check_interface_state
+        args: ['dh', 'interface', '**kwargs']
+
+change_config_state:
+    trigger:
+        method: jnpr.toby.utils.triggers.change_config_state
+        args: ['**kwargs']
+
+deactivate_activate_config:
+    trigger:
+        method: jnpr.toby.utils.triggers.deactivate_activate_config
+        args: ['**kwargs']
+
+disable_enable_config:
+    trigger:
+        method: jnpr.toby.utils.triggers.disable_enable_config
+        args: ['**kwargs']
+
+set_delete_config:
+    trigger:
+        method: jnpr.toby.utils.triggers.set_delete_config
+        args: ['dh', 'protocol', '**kwargs']
+
+kill_daemon:
+    trigger:
+        method: jnpr.toby.utils.triggers.kill_daemon
+        args: ['dh', '**kwargs']
+
+restart_process:
+    trigger:
+        method: jnpr.toby.utils.triggers.restart_processes
+        args: ['dh', 'process', '**kwargs']
+        
+restart_app:
+    trigger:
+        method: jnpr.toby.utils.triggers.restart_app
+        args: ['dh', 'app', 'node=re0', '**kwargs']
+    check:
+        method: jnpr.toby.utils.triggers.check_evo_app
+        args: ['dh', 'app', '**kwargs']
+        
+kill_app:
+    trigger:
+        method: jnpr.toby.utils.triggers.kill_app
+        args: ['dh', 'app', 'node=re0', '**kwargs']
+    check:
+        method: jnpr.toby.utils.triggers.check_evo_app
+        args: ['dh', 'app', '**kwargs']
+
+CE: # class method
+    trigger:
+        method: jnpr.toby.engines.config.config.config().config_engine
+        args: ['*args', '**kwargs']
+
+config_engine:
+    trigger:
+        method: ROBOT:config engine
+        args: ['*args', '**kwargs']
+
+verify:
+    trigger:
+        method: ROBOT:verify
+        args: ['*args', '**kwargs']
+
+
+

@@ -1,0 +1,9 @@
+verify_jvision:
+    ARGS: [intf : ae1.13, attr : timestamp]
+    ospf_hello_interval:
+        ARGS: [attr : jvalue]
+        jkey: abc
+        attribute: var['attr']
+        operator: not-exists
+        value: 20
+        records: 0

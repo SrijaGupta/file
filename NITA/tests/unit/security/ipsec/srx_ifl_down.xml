@@ -1,0 +1,12 @@
+    <interface-information>
+        <logical-interface>
+            <name>st0.1</name>
+            <admin-status>up</admin-status>
+            <oper-status>down</oper-status>
+            <filter-information>
+            </filter-information>
+            <address-family>
+                <address-family-name>inet</address-family-name>
+            </address-family>
+        </logical-interface>
+    </interface-information>

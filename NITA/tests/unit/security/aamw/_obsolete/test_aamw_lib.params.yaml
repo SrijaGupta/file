@@ -1,0 +1,120 @@
+--- 
+jaas: 
+  params: /homes/haochen/PycharmProjects/aamw_util/test_aamw_lib.params
+  plite: /homes/haochen/PycharmProjects/aamw_util/test_aamw_lib.params.plite
+t: 
+  resources: 
+    h0: 
+      interfaces: 
+        h0r0: 
+          link: link1
+          management: 0
+          name: eth1
+          pic: eth1
+          type: 
+            - eth
+            - ether
+      system: 
+        primary: 
+          controllers: 
+            if0: 
+              domain: englab.juniper.net
+              hostname: argon-smtps-vm20
+              mgt-intf-name: eth0
+              osname: linux
+          make: dell
+          model: poweredge r820
+          name: argon-smtps-vm20
+          osname: linux
+    h1: 
+      interfaces: 
+        h1r0: 
+          link: link2
+          management: 0
+          name: eth1
+          pic: eth1
+          type: 
+            - eth
+            - ether
+      system: 
+        primary: 
+          controllers: 
+            if0: 
+              domain: englab.juniper.net
+              hostname: argon-smtps-vm21
+              mgt-intf-name: eth0
+              osname: linux
+          make: dell
+          model: poweredge r820
+          name: argon-smtps-vm21
+          osname: linux
+    r0: 
+      interfaces: 
+        r0_internet: 
+          link: r0r0_internet
+          management: 0
+          name: ge-0/0/1.0
+          pic: ge-0/0/1
+          type: 
+            - internet
+            - ge,ether
+          unit: 0
+        r0h0: 
+          link: link1
+          management: 0
+          name: ge-0/0/2.0
+          pic: ge-0/0/2
+          type: 
+            - ge
+            - ether
+          unit: 0
+        r0h1: 
+          link: link2
+          management: 0
+          name: ge-0/0/3.0
+          pic: ge-0/0/3
+          type: 
+            - ge
+            - internet
+          unit: 0
+      system: 
+        primary: 
+          controllers: 
+            unknown: 
+              con-ip: 10.82.65.161
+              domain: spglab.juniper.net
+              hostname: argon-forge-08-n
+              isoaddr: 47.0005.80ff.f800.0000.0108.0001.0102.5506.4234.00
+              loop-ip: 10.255.64.234
+              loop-ipv6: abcd::10:255:64:234
+              mgt-intf-name: fxp0.0
+              mgt-ip: 10.157.64.234
+              mgt-ipv6: abcd::10:157:64:234
+              osname: JunOS
+          make: juniper
+          model: srx1500
+          name: argon-forge-08
+          osname: JunOS
+  user_variables: 
+    uv-cacert-file: /root/cacert.pem
+    uv-default-gw: 30.30.30.30
+    uv-default-profile: default_profile
+    uv-h0r0-ipv4-ipaddr: 13.0.0.1
+    uv-h0r0-ipv6-ipaddr: 2013::1
+    uv-h1r0-ipv4-ipaddr: 14.0.0.1
+    uv-h1r0-ipv6-ipaddr: 2014::1
+    uv-ipv4-mask: 8
+    uv-ipv6-mask: 64
+    uv-r0h0-ipv4-ipaddr: 13.0.0.254
+    uv-r0h0-ipv4-network: 13.0.0.0/8
+    uv-r0h0-ipv6-ipaddr: 2013::254
+    uv-r0h0-ipv6-network: 2013::0/64
+    uv-r0h1-ipv4-ipaddr: 14.0.0.254
+    uv-r0h1-ipv4-network: 14.0.0.0/8
+    uv-r0h1-ipv6-ipaddr: 2014::254
+    uv-r0h1-ipv6-network: 2014::0/64
+    uv-smtp-server-cert-file: /root/utm-pc143-cert.pem
+    uv-smtp-server-key-file: /root/utm-pc143-key.pem
+    uv-ui-tenant-account: arout@juniper.net
+    uv-ui-tenant-name: srx-reg1
+    uv-ui-tenant-pwd: Embe1mpls@jnpr

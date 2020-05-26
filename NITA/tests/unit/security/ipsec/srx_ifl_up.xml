@@ -1,0 +1,15 @@
+<interface-information style="terse">
+  <logical-interface>
+    <name>st0.1</name>
+    <admin-status>up</admin-status>
+    <oper-status>up</oper-status>
+    <filter-information/>
+    <address-family>
+      <address-family-name>inet</address-family-name>
+      <interface-address>
+        <ifa-local emit="emit">202.2.1.100/24</ifa-local>
+      </interface-address>
+    </address-family>
+  </logical-interface>
+</interface-information>
+

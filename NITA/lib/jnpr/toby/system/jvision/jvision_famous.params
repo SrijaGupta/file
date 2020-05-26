@@ -1,0 +1,267 @@
+
+
+
+r0 {
+    x-dut 1;
+
+    system { 
+        name "famous";
+        #fv-connect-controllers "all"; 
+    }
+    
+    interfaces{
+        
+        #R0R1 in miniPDT
+        r0r1 {
+            name "et-4/0/15:0.0";
+            link "r0r1";
+            uv-ip "26.1.1.65/24";
+        }
+        
+        r0r2_0 {
+
+             name "et-4/0/12:0.0";
+             link "r0r2_0";
+             #x-options ("gigether-options 802.3ad ae0");
+        }
+        
+        r0r2_1{
+            name "et-4/0/12:1.0";
+            link "r0r2_1";       
+        }
+
+        r0rt0_0 {
+            name "et-4/0/0:0.0";
+            link "r0rt0_0";
+        }
+        
+        r0rt0_2 {
+            name "et-4/0/13:0.0";
+            link "r0rt0_2";
+        }
+
+# below is for cpu/npu sensor
+        r0r2_2{
+             type (and (or "FPC-P1" "FPC-P2") "10GE");
+             #name "et-4/1/2:1.0";
+             link "r0r2_2";
+             #x-options ("gigether-options 802.3ad ae1");
+        }
+        
+        r0r2_3{
+            type (and (or "FPC-P1" "FPC-P2") "10GE");
+            #x-options ("gigether-options 802.3ad ae1");
+            link "r0r2_3";
+        }
+        
+        r0r2_5{
+            type (and (or "FPC-P1" "FPC-P2") "10GE");
+            #x-options ("gigether-options 802.3ad ae2");
+            link "r0r2_5";
+        }
+        
+        r0rt0_3 {
+            
+            name "et-4/0/13:1.0";
+            link "r0rt0_3";
+        }
+
+#below is for tc_count
+        
+        #r0-rt-1 in miniPDT
+        r0rt0_1 { 
+            uv-ip "11.0.0.1/24";
+            uv-ipv6 "9011::1/64";
+            name "et-4/0/13:3.0";
+            link "r0rt0_1";
+        }
+        
+        #r0-rt-2 in miniPDT
+        r0rt0_4 {
+            uv-ip "22.0.0.1/24";
+            uv-ipv6 "9022::1/64";
+            name "et-4/0/13:2.0";
+            link "r0rt0_4";
+         }
+         
+         #r0-r2 in miniPDT       
+         r0r2_4 {
+             name "et-4/0/12:2.0";
+             link "r0r2_4";
+         }
+
+
+
+    }
+
+    uv-grpc-oc-template "my_grpc_oc.template";
+
+}
+
+r1 {
+    
+    uv-grpc-switch 1;
+    system { name "moon04"; }
+    
+    interfaces{
+        r0r1 { link "r0r1"; }
+        r1h0 { link "r1h0"; }
+    }
+
+}
+
+r2{
+    system { name "hue"; }
+    interfaces {
+        r0r2_0 {     
+            #x-options ("gigether-options 802.3ad ae0");
+            link "r0r2_0";
+        }
+        
+        r0r2_1{
+            #x-options ("gigether-options 802.3ad ae0");
+            link "r0r2_1";
+        }
+        
+        r2rt0_0{ link "r2rt0_0"; }
+
+        r2rt0_2{ link "r2rt0_2"; }
+        
+        #r0-r2 in miniPDT
+        r0r2_4 { link "r0r2_4"; }
+        
+        #r2-rt in miniPDT
+        r2rt0_1{
+            uv-ip "192.1.1.1/24";
+            link "r2rt0_1";
+        }
+
+#below are for npu/cpu sensor
+        r0r2_2{
+            #x-options ("gigether-options 802.3ad ae1");
+            link "r0r2_2";
+        }
+        
+        r0r2_3{
+            #x-options ("gigether-options 802.3ad ae1");
+            link "r0r2_3";
+        }
+        r0r2_5{
+            #x-options ("gigether-options 802.3ad ae2");
+            link "r0r2_5";
+        }
+        r2rt0_3 {
+            name "et-4/0/15.0";
+            link "r2rt0_3";
+        }
+    }
+}
+
+
+RT0{
+    system {
+        make "spirent";
+        name "infra-stc-spirent3";
+    }
+    
+    interfaces {
+        r0rt0_0{
+            link "r0rt0_0";
+        
+            #type fiber;
+        }
+        
+        r0rt0_2{
+            link "r0rt0_2";
+            #x-type fiber;
+        }
+
+        r2rt0_0{
+            link "r2rt0_0";
+            #x-type fiber;
+        }
+        
+        r2rt0_2{
+            link "r2rt0_2";
+            #x-type fiber;
+        }
+        
+        #r0-rt-1 in miniPDT
+        r0rt_1 {
+                  
+              x-ip "11.0.0.2/24";
+              #x-ipv6 "9011::2/64";
+              link "r0rt_1";
+        }
+        
+        #r0-rt-2 in miniPDT
+        r0rt_4 {  
+              #x-ip "22.0.0.2/24";
+              #x-ipv6 "9022::2/64";
+              link "r0rt_4";
+        }
+        
+        #r2-rt in miniPDT
+        r2rt0_1{
+            #x-ip "192.1.1.2/24";
+            link "r2rt0_1";
+        }
+# ports for cpu/npu 
+        r0rt0_3 { link "r0rt0_3"; }
+        r2rt0_3 { link "r2rt0_3"; }
+    }
+}
+
+
+h0 {
+    # tells GRPC.pm where to find the decoder.py
+    uv-grpc-decoder-path "/opt/jvision/grpc/oc";
+    uv-grpc-decoder-name "grpc_oc_decoder.py";
+    uv-grpc-decoder-ssh-name "grpc_oc_decoder_ssh.py";
+
+    # log name options and other args for the decoder
+    uv-grpc-decoder-log-path  "/opt/jvision/grpc/oc/jvision_log";  # default is decoder_path/jvision_log/
+    uv-grpc-decoder-log-name-head "grpc_minipdt";  # default is script_name_PID_SrcAddr_port_RemotePort.txt
+    uv-grpc-decoder-session-log-name-head "grpc_minipdt_session";
+    uv-grpc-decoder-ssh-log-name-head "grpc_minipdt_ssh";
+    uv-grpc-decoder-ssh-session-log-name-head "grpc_minipdt_ssh_session";
+
+    system {
+        name "nole";
+        model (or "linux" "freebsd" "IXR1104S-150528" "ix-2203r" "ix-1104");
+        make (or "lab-trolls" "iXSystems");
+    }
+    
+    interfaces{
+        r1h0 {
+            uv-grpc-port 1;     #JVISION mandatory
+            #x-ip "26.1.1.1/24";
+            link "r1h0";
+        }
+    }
+
+
+}
+
+
+
+
+
+
+uv-dut-intf-ip "26.1.1.65/24";
+uv-collector-ip "26.1.1.1";
+
+uv-jv-dut-ip "famous";
+uv-jv-collector-ip "nole";
+uv-jv-filter "";
+#uv-jv-path "/junos/system/linecard/packet/usage/";
+uv-jv-path "/interfaces/,/components/";
+uv-jv-frequency 2000;
+uv-jv-server "nole";
+uv-db-username "influx";
+uv-db-password "influxdb";
+uv-db-host "jvision-db1.englab.juniper.net";
+uv-db-port "8086";
+uv-db-where-default None;
+uv-db-limit-default "100";
+
