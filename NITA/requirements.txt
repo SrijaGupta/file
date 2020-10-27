@@ -5,7 +5,7 @@ selenium==3.5.0
 robotframework==3.0.4
 grpcio==1.18.0
 protobuf==3.6.1
-cryptography==2.7
+cryptography==3.2
 jxmlease==1.0.1
 websocket-client==0.56.0
 autopep8==1.4.4    
