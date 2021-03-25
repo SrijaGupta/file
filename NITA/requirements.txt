@@ -20,7 +20,7 @@ pep8==1.7.1
 pexpect==4.7.0
 pyOpenSSL==19.0.0
 pysnmp==4.4.9
-PyYAML==5.1.1
+PyYAML==5.4
 robotframework-debuglibrary==1.1.4
 scp==0.13.2
 Sphinx==2.1.2
