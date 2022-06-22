@@ -29,7 +29,7 @@ robotframework-extendedrequestslibrary==0.5.5
 boto3==1.9.185
 influxdb==5.2.2
 troposphere==2.4.9
-numpy==1.16.4
+numpy==1.22.0
 pandas==0.24.2
 plotly==3.10.0
 graphviz==0.11.1
