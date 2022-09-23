@@ -4,7 +4,7 @@ robotframework-seleniumlibrary==3.0.0a2
 selenium==3.5.0
 robotframework==3.0.4
 grpcio==1.18.0
-protobuf==3.6.1
+protobuf==3.18.3
 cryptography==2.7
 jxmlease==1.0.1
 websocket-client==0.56.0
