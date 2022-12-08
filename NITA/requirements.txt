@@ -46,7 +46,7 @@ ruamel.yaml==0.15.89
 pyroute2==0.5.6
 pysftp==0.2.9
 jsonpath-rw==1.4.0
-certifi==2018.11.29
+certifi==2022.12.7
 psycopg2==2.8.3
 psutil==5.6.3
 backports.ssl_match_hostname==3.5.0.1
